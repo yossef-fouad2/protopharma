@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:protopharma/models/drug_model.dart';
-import 'package:protopharma/services/load_drugs.dart';
-import 'package:protopharma/services/storage_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -18,7 +15,7 @@ class HomeScreen extends StatelessWidget {
           Center(
             child: ElevatedButton(
               onPressed: () async {
-                print(drugBox.length);
+                // print("drugBox.length is ${drugBox.length}");
                 // List<DrugModel> drugs = await loadDrugs();
                 //no need since we call it once the app runs
               },

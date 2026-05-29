@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "328431110915",
+    "project_id": "protopharma-140d7",
+    "storage_bucket": "protopharma-140d7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:328431110915:android:7e6758262ca1be966e7736",
+        "android_client_info": {
+          "package_name": "com.example.protopharma"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1w8Ac-4F4nWS_fWEajyxdWgAjAOPyPRQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

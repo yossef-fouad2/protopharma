@@ -35,6 +35,9 @@ migrate_working_dir/
 
 # Symbolication related
 app.*.symbols
+# Exclude the secure drug database asset
+assets/data/egyptian-drugs.json
+
 
 # Obfuscation related
 app.*.map.json
