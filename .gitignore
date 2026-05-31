@@ -37,6 +37,7 @@ migrate_working_dir/
 app.*.symbols
 # Exclude the secure drug database asset
 assets/data/egyptian-drugs.json
+lib/seeder
 
 
 # Obfuscation related
