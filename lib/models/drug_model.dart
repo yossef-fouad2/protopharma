@@ -22,7 +22,7 @@ class DrugModel {
   @HiveField(5)
   final double priceEGP;
 
-  DrugModel({
+  const DrugModel({
     required this.commercialNameEn,
     required this.scientificName,
     required this.manufacturer,
@@ -33,12 +33,12 @@ class DrugModel {
 
   factory DrugModel.fromJson(Map<String, dynamic> json) {
     return DrugModel(
-      commercialNameEn: json['commercial_name_en'],
-      scientificName: json['scientific_name'],
-      manufacturer: json['manufacturer'],
-      drugClass: json['drug_class'],
-      route: json['route'],
-      priceEGP: (json['price_egp'] as num).toDouble(),
+      commercialNameEn: json['commercialNameEn'] ?? json['commercial_name_en'] ?? '',
+      scientificName: json['scientificName'] ?? json['scientific_name'] ?? '',
+      manufacturer: json['manufacturer'] ?? '',
+      drugClass: json['drugClass'] ?? json['drug_class'] ?? '',
+      route: json['route'] ?? '',
+      priceEGP: ((json['priceEGP'] ?? json['price_egp'] ?? 0.0) as num).toDouble(),
     );
   }
 }
