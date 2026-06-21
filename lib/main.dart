@@ -1,13 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
-import 'package:protopharma/config/app_config.dart';
-import 'package:protopharma/config/app_pages.dart';
-import 'package:protopharma/config/app_routes.dart';
-import 'package:protopharma/config/app_theme.dart';
-import 'package:protopharma/features/home/home_screen.dart';
+import 'package:protopharma/core/config/app_config.dart';
+import 'package:protopharma/core/config/app_pages.dart';
+import 'package:protopharma/core/config/app_theme.dart';
 import 'package:protopharma/firebase_options.dart';
-import 'package:protopharma/services/storage_service.dart';
+import 'package:protopharma/core/services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

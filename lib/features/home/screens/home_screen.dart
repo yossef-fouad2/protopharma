@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:protopharma/config/app_theme.dart';
-import 'package:protopharma/models/drugs_repositry.dart';
+import 'package:protopharma/core/config/app_theme.dart';
+import 'package:protopharma/features/drugs/repositories/drugs_repository.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});

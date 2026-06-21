@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import 'package:protopharma/models/drug_model.dart';
+import 'package:protopharma/features/drugs/models/drug_model.dart';
 
 Future<List<DrugModel>> loadDrugs() async {
   final String jsonDrugs = await rootBundle.loadString(

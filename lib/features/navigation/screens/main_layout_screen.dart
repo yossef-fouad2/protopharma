@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/get_instance.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
-import 'package:protopharma/features/home/home_screen.dart';
+import 'package:protopharma/features/home/screens/home_screen.dart';
+import 'package:protopharma/features/navigation/controllers/navigation_controller.dart';
 import 'package:protopharma/features/navigation/widgets/side_nav_bar.dart';
 
 class MainLayoutScreen extends StatelessWidget {
@@ -8,11 +11,24 @@ class MainLayoutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(NavigationController());
     return Scaffold(
       body: Row(
         children: [
           const SideNavBar(),
-          Expanded(child: Obx() =>IndexedStack()),
+          Expanded(
+            child: Obx(
+              () => IndexedStack(
+                index: controller.selectedIndex,
+                children: const [
+                  HomeScreen(),
+                  // InventoryScreen(),
+                  // OrdersScreen(),
+                  // CheckoutScreen(),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

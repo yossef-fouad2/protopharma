@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:protopharma/models/drug_model.dart';
-import 'package:protopharma/services/load_drugs.dart';
+import 'package:protopharma/features/drugs/models/drug_model.dart';
+import 'package:protopharma/features/drugs/services/load_drugs.dart';
 
 late Box<DrugModel> drugBox;
 

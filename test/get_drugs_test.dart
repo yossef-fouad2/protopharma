@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import 'package:protopharma/models/drugs_repositry.dart';
+import 'package:protopharma/features/drugs/repositories/drugs_repository.dart';
 
 void main() {
   test('get drugs with pagination', () async {
