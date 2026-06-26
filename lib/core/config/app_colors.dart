@@ -9,14 +9,14 @@ abstract class AppColors {
   // Surface Colors
   static const Color background = Color(0xFFF7F9FB);
   static const Color surface = Colors.white;
-  static const Color surfaceContainerLow = Color(0xFFF2F4F6);
-  
+  static const Color surfaceContainerLow = Color(0xFFF8F9FF);
+
   // Neutral Colors (Slate palette)
   static const Color textHeadline = Color(0xFF0F172A);
   static const Color textBody = Color(0xFF475569);
   static const Color textMuted = Color(0xFF94A3B8);
   static const Color border = Color(0xFFE2E8F0);
-  
+
   // Semantic Colors
   static const Color success = Color(0xFF10B981);
   static const Color error = Color(0xFFEF4444);

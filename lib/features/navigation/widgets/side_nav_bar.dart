@@ -3,6 +3,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/get_instance.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
 import 'package:protopharma/core/config/app_routes.dart';
+import 'package:protopharma/core/config/app_theme.dart';
 import 'package:protopharma/features/navigation/controllers/navigation_controller.dart';
 import 'package:protopharma/features/navigation/models/nav_menu_item_model.dart';
 
@@ -36,16 +37,16 @@ class SideNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<NavigationController>();
     return Container(
-      width: 300,
+      width: 230,
       height: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Theme.of(context).colorScheme.surface,
+      decoration: const BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        border: Border(right: BorderSide(color: AppColors.border, width: 1)),
       ),
-
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          SizedBox(height: 160),
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -54,31 +55,54 @@ class SideNavBar extends StatelessWidget {
                 final item = _menuItems[index];
                 return Obx(() {
                   final isSelected = controller.selectedIndex == index;
-                  return ListTile(
-                    leading: Icon(
-                      item.icon,
-                      color: isSelected
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
-                    ),
-                    title: Text(
-                      item.title,
-                      style: TextStyle(
-                        color: isSelected
-                            ? Theme.of(context).colorScheme.primary
-                            : null,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 9.0),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: ListTile(
+                        selected: isSelected,
+                        visualDensity: const VisualDensity(
+                          vertical: -4,
+                        ), // Shrinks vertical space (default is 0, minimum is -4)
+                        // 1. Hover State: 8% Opacity for subtle feedback
+                        hoverColor: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.08),
+
+                        // 2. Shape: 12px Rounded Corners (rounded-xl)
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+
+                        // 3. Selection Color: High-contrast Solid Primary
+                        selectedTileColor: AppColors.primaryDark,
+
+                        // 4. Icon & Text Colors:
+                        leading: Icon(
+                          item.icon,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textMuted,
+                          size: 20,
+                        ),
+                        title: Text(
+                          item.title,
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.textMuted,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            fontSize: 14,
+                          ),
+                        ),
+                        onTap: () => controller.changeIndex(index),
                       ),
                     ),
-                    selected: isSelected,
-                    onTap: () => controller.changeIndex(index),
                   );
                 });
               },
-
-             
             ),
           ),
         ],

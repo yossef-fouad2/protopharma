@@ -47,3 +47,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local build artifacts and trace logs
+android/build/
+android/gradle_output.txt
+android/gradle_stacktrace.txt
+flutter_build_verbose.txt

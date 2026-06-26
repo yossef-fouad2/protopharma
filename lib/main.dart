@@ -11,7 +11,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await initHive();
-  // await seedDrugDatabase();
+  await seedDrugDatabase();
   runApp(const MyApp());
 }
 

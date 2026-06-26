@@ -7,7 +7,11 @@ late Box<DrugModel> drugBox;
 
 Future<void> initHive() async {
   await Hive.initFlutter();
-  Hive.registerAdapter(DrugModelAdapter());
+  try {
+    Hive.registerAdapter(DrugModelAdapter());
+  } catch (e) {
+    debugPrint("Adapter already registered: $e");
+  }
   drugBox = await Hive.openBox<DrugModel>('drugs');
 }
 

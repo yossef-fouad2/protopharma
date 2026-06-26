@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:protopharma/core/config/app_theme.dart';
+import 'package:protopharma/core/services/storage_service.dart';
+import 'package:protopharma/core/services/storage_service.dart' as hive_service;
 import 'package:protopharma/features/drugs/repositories/drugs_repository.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  HomeScreen({super.key});
+  // final drugsRepo = DrugsRepository();
+  // late final drugs = drugsRepo.getDrugs();
+  final drugBox = hive_service.drugBox;
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +40,13 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () async {
-                    var drugsRepo = DrugsRepository();
-                    var drugs = await drugsRepo.getDrugs();
-                    debugPrint("Number of drugs: ${drugs.length}");
+                    // var drugsRepo = DrugsRepository();
+                    // var drugs = await drugsRepo.getDrugs();
+                    final list = drugBox.values.toList();
+                    debugPrint("Number of drugs: ${list.length}");
+                    debugPrint(
+                      "First 20 drugs: ${list.take(20).map((e) => e.commercialNameEn).toList()}",
+                    );
                   },
                   child: Text("Load Drugs", style: AppTextStyles.poppinsMedium),
                 ),
