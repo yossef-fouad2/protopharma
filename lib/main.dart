@@ -4,14 +4,16 @@ import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:protopharma/core/config/app_config.dart';
 import 'package:protopharma/core/config/app_pages.dart';
 import 'package:protopharma/core/config/app_theme.dart';
+import 'package:protopharma/data/app_database.dart';
+import 'package:protopharma/data/fetch_drugs.dart';
 import 'package:protopharma/firebase_options.dart';
-import 'package:protopharma/core/services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await initHive();
-  await seedDrugDatabase();
+  final db = AppDatabase();
+  await insertAllDrugs(db);
+
   runApp(const MyApp());
 }
 

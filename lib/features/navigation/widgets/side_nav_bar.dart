@@ -37,7 +37,7 @@ class SideNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<NavigationController>();
     return Container(
-      width: 230,
+      width: 200,
       height: double.infinity,
       decoration: const BoxDecoration(
         color: AppColors.surfaceContainerLow,
@@ -49,7 +49,7 @@ class SideNavBar extends StatelessWidget {
           SizedBox(height: 160),
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               itemCount: _menuItems.length,
               itemBuilder: (context, index) {
                 final item = _menuItems[index];
@@ -71,7 +71,7 @@ class SideNavBar extends StatelessWidget {
 
                         // 2. Shape: 12px Rounded Corners (rounded-xl)
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(3),
+                          borderRadius: BorderRadius.circular(5),
                         ),
 
                         // 3. Selection Color: High-contrast Solid Primary
@@ -83,7 +83,7 @@ class SideNavBar extends StatelessWidget {
                           color: isSelected
                               ? Colors.white
                               : AppColors.textMuted,
-                          size: 20,
+                          size: 18,
                         ),
                         title: Text(
                           item.title,
@@ -94,7 +94,7 @@ class SideNavBar extends StatelessWidget {
                             fontWeight: isSelected
                                 ? FontWeight.w600
                                 : FontWeight.w400,
-                            fontSize: 14,
+                            fontSize: 12,
                           ),
                         ),
                         onTap: () => controller.changeIndex(index),
