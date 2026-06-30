@@ -1,28 +1,62 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:protopharma/features/drugs/models/drug_model.dart';
+import '../../../data/app_database.dart';
 
 class DrugsRepository {
   final FirebaseFirestore _firestore;
-  
+  final AppDatabase _db;
   // List of all loaded drugs across pages
   final List<DrugModel> drugs = [];
-  
+
   // Pagination tracking variables
   DocumentSnapshot? _lastDocument;
   bool _hasMore = true;
   bool _isLoading = false;
 
-  DrugsRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  DrugsRepository({FirebaseFirestore? firestore, required AppDatabase db})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _db = db;
 
   // Getters to inspect the state from outside
   bool get hasMore => _hasMore;
   bool get isLoading => _isLoading;
 
+
+
+Future<List<DrugModel>> getLocalDrugs() async {
+  // Query the table directly using the repository's local database instance (_db)
+  final drugDataList = await _db.select(_db.drugTable).get();
+
+  // Map and return as DrugModel
+  return drugDataList
+      .map(
+        (e) => DrugModel(
+          commercialNameEn: e.commercialNameEn,
+          commercialNameAR: e.commercialNameAR,
+          scientificName: e.scientificName,
+          manufacturer: e.manufacturer,
+          drugClass: e.drugClass,
+          route: e.route,
+          priceEGP: e.priceEGP,
+        ),
+      )
+      .toList();
+}
+
+
+
+
+
+
+
   /// Fetches a page of drugs from Firestore.
-  /// 
+  ///
   /// Set [isRefresh] to true to start fetching from the first page again.
-  Future<List<DrugModel>> getDrugs({int pageSize = 20, bool isRefresh = false}) async {
+  Future<List<DrugModel>> getDrugs({
+    int pageSize = 20,
+    bool isRefresh = false,
+    String? drugId,
+  }) async {
     // If already loading, ignore duplicate calls
     if (_isLoading) return [];
 
@@ -39,9 +73,7 @@ class DrugsRepository {
 
     try {
       // 1. Start with the ordered query
-      Query query = _firestore
-          .collection('drugs')
-          .orderBy('commercialNameEn');
+      Query query = _firestore.collection('drugs').orderBy('commercialNameEn');
 
       // 2. Apply startAfterDocument cursor first (essential for fake_cloud_firestore sequence matching)
       if (_lastDocument != null) {

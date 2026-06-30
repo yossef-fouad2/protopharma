@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:protopharma/data/app_database.dart';
 import 'package:protopharma/features/drugs/repositories/drugs_repository.dart';
 
 void main() {
   test('get drugs with pagination', () async {
     final fakeFirestore = FakeFirebaseFirestore();
+    final db = AppDatabase();
 
     // Seed mock data using camelCase keys (matching the actual Firestore structure)
     await fakeFirestore.collection('drugs').add({
@@ -34,7 +36,7 @@ void main() {
       'priceEGP': 15.0,
     });
 
-    final repository = DrugsRepository(firestore: fakeFirestore);
+    final repository = DrugsRepository(firestore: fakeFirestore, db: db);
 
     // --- TEST PAGE 1 (Size: 2) ---
     final page1 = await repository.getDrugs(pageSize: 2);

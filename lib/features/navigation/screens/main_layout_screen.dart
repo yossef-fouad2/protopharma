@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_instance/get_instance.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
@@ -23,7 +24,7 @@ class MainLayoutScreen extends StatelessWidget {
                 index: controller.selectedIndex,
                 children: [
                   HomeScreen(),
-                  const InventoryScreen(),
+                  InventoryScreen(),
                   const Center(child: Text('Orders Screen')),
                   const Center(child: Text('Checkout Screen')),
                 ],
