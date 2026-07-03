@@ -4,6 +4,8 @@ import 'package:protopharma/core/config/app_colors.dart';
 import 'package:protopharma/core/config/app_text_styles.dart';
 import 'package:protopharma/data/app_database.dart';
 
+import '../../drugs/models/drug_model.dart';
+
 class DisplayTable extends StatelessWidget {
   const DisplayTable({
     super.key,
@@ -12,7 +14,7 @@ class DisplayTable extends StatelessWidget {
   });
 
   final List<String> columnNames;
-  final List<DrugTableData> drugData;
+  final List<DrugModel> drugData;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +49,7 @@ class DisplayTable extends StatelessWidget {
         children: [
           // Header Row
           TableRow(
-            decoration: BoxDecoration(
+            decoration:BoxDecoration(
               color: AppColors.surfaceContainerLow,
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
@@ -57,7 +59,10 @@ class DisplayTable extends StatelessWidget {
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
                       name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: AppTextStyles.titleMedium.copyWith(
+                        color: AppColors.textHeadline,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 )
@@ -68,31 +73,62 @@ class DisplayTable extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(drug.commercialNameEn),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        drug.commercialNameEn,
+                        style: AppTextStyles.tableCell.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textHeadline,
+                        ),
+                      ),
+                      if (drug.commercialNameAR.isNotEmpty)
+                        Text(
+                          drug.commercialNameAR,
+                          style: AppTextStyles.tableCell.copyWith(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(drug.commercialNameAR),
+                  child: Text(
+                    drug.drugClass,
+                    style: AppTextStyles.tableCell,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(drug.scientificName),
+                  child: Text(
+                    drug.scientificName,
+                    style: AppTextStyles.tableCell,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(drug.manufacturer),
+                  child: Text(
+                    drug.manufacturer,
+                    style: AppTextStyles.tableCell,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(drug.drugClass),
+                  child: Text(
+                    drug.route,
+                    style: AppTextStyles.tableCell,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(drug.route),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(drug.priceEGP.toString()),
+                  child: Text(
+                    drug.priceEGP.toStringAsFixed(2),
+                    style: AppTextStyles.tableCell,
+                  ),
                 ),
               ],
             ),

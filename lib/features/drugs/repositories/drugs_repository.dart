@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:drift/drift.dart' hide Query;
 import 'package:protopharma/features/drugs/models/drug_model.dart';
 import '../../../data/app_database.dart';
 
@@ -21,33 +22,31 @@ class DrugsRepository {
   bool get hasMore => _hasMore;
   bool get isLoading => _isLoading;
 
-
-
-Future<List<DrugModel>> getLocalDrugs() async {
-  // Query the table directly using the repository's local database instance (_db)
-  final drugDataList = await _db.select(_db.drugTable).get();
-
-  // Map and return as DrugModel
-  return drugDataList
-      .map(
-        (e) => DrugModel(
-          commercialNameEn: e.commercialNameEn,
-          commercialNameAR: e.commercialNameAR,
-          scientificName: e.scientificName,
-          manufacturer: e.manufacturer,
-          drugClass: e.drugClass,
-          route: e.route,
-          priceEGP: e.priceEGP,
-        ),
-      )
-      .toList();
-}
-
-
-
-
-
-
+  Future<List<DrugModel>> getLocalDrugs({
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    // Query the table directly using the repository's local database instance (_db)
+    final drugDataList =
+        await (_db.select(_db.drugTable)
+              ..orderBy([(t) => OrderingTerm.asc(t.commercialNameEn)])
+              ..limit(limit, offset: offset))
+            .get();
+    // Map and return as DrugModel
+    return drugDataList
+        .map(
+          (e) => DrugModel(
+            commercialNameEn: e.commercialNameEn,
+            commercialNameAR: e.commercialNameAR,
+            scientificName: e.scientificName,
+            manufacturer: e.manufacturer,
+            drugClass: e.drugClass,
+            route: e.route,
+            priceEGP: e.priceEGP,
+          ),
+        )
+        .toList();
+  }
 
   /// Fetches a page of drugs from Firestore.
   ///

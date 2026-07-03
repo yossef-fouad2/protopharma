@@ -4,6 +4,14 @@ import 'package:protopharma/features/inventory/inventory_state.dart';
 
 import '../drugs/models/drug_model.dart';
 
+///make new events load first page on openning
+///
+/// load_next_page
+///
+/// pageNumbers [1,2,3,4,5] when click on next it should
+///
+/// handle refresh
+
 class InventoryCubit extends Cubit<InventoryState> {
   // final AppDatabase db;
   InventoryCubit({required this.drugRepository})
@@ -13,25 +21,29 @@ class InventoryCubit extends Cubit<InventoryState> {
   final DrugsRepository drugRepository;
   // final String drugId;
 
-  // ── Pagination state (private, UI never sees these) ──
+  // ── State variables ──
   final List<DrugModel> _allDrugs = [];
-  int _offset = 0;
-  bool _hasMore = true;
   bool _isLoading = false;
-  static const _pageSize = 20;
+  bool _hasMore = true;
 
   Future<void> _loadInventory() async {
     _isLoading = true;
     try {
       //1
-      final List<DrugModel> drugs = await drugRepository.getLocalDrugs();
+      final List<DrugModel> drugs = await drugRepository.getLocalDrugs(
+        offset: _allDrugs.length,
+        limit: 10,
+      );
+      if (drugs.length < 10) {
+        _hasMore = false; // We reached the end of the database.
+      }
       _allDrugs.addAll(drugs);
       _isLoading = false;
       //2
       emit(
         InventorySuccess(
           drugs: List.unmodifiable(_allDrugs),
-          hasMore: drugRepository.hasMore,
+          hasMore: _hasMore,
           isLoadingMore: _isLoading,
         ),
       );
@@ -39,5 +51,18 @@ class InventoryCubit extends Cubit<InventoryState> {
       _isLoading = false;
       emit(InventoryFailure());
     }
+  }
+
+  Future<void> loadNextPage() async {
+    if (_isLoading) return;
+    if (!_hasMore) return;
+    emit(
+      InventorySuccess(
+        drugs: List.unmodifiable(_allDrugs),
+        hasMore: _hasMore,
+        isLoadingMore: true,
+      ),
+    );
+    _loadInventory();
   }
 }

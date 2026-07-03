@@ -8,23 +8,13 @@ import 'package:protopharma/data/tables/drug_table.dart';
 
 part 'app_database.g.dart';
 
-
-
 @DriftDatabase(tables: [DrugTable])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
-
   @override
   int get schemaVersion => 1;
-
-
-  
 }
-
-
-
-
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:protopharma/core/config/app_theme.dart';
+import 'package:protopharma/data/app_database.dart';
 import 'package:protopharma/data/fetch_drugs.dart';
 
 class HomeScreen extends StatelessWidget {
- const HomeScreen({super.key});
+  const HomeScreen({super.key});
   // final drugsRepo = DrugsRepository();
   // late final drugs = drugsRepo.getDrugs();
   // final drugBox = hive_service.drugBox;
-
-
 
   @override
   Widget build(BuildContext context) {
