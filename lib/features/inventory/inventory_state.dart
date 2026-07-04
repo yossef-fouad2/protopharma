@@ -17,14 +17,16 @@ class InventorySuccess extends InventoryState {
     required this.drugs,
     required this.hasMore,
     required this.isLoadingMore,
+    required this.currentPage,
   });
 
   final List<DrugModel> drugs;
   final bool hasMore;
   final bool isLoadingMore;
+  final int currentPage;
 
   @override
-  List<Object?> get props => [drugs, hasMore, isLoadingMore];
+  List<Object?> get props => [drugs, hasMore, isLoadingMore, currentPage];
 }
 
 class InventoryFailure extends InventoryState {

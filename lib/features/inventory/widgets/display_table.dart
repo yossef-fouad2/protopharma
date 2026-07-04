@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:protopharma/core/config/app_colors.dart';
 import 'package:protopharma/core/config/app_text_styles.dart';
-import 'package:protopharma/data/app_database.dart';
 
 import '../../drugs/models/drug_model.dart';
 
@@ -26,7 +24,7 @@ class DisplayTable extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -37,7 +35,7 @@ class DisplayTable extends StatelessWidget {
         columnWidths: const {
           0: FlexColumnWidth(2.5), // Medication name
           1: FlexColumnWidth(1.5), // Category
-          2: FlexColumnWidth(2),   // Scientific Name
+          2: FlexColumnWidth(2), // Scientific Name
           3: FlexColumnWidth(1.8), // Stock Level
           4: FlexColumnWidth(1.2), // Route
           5: FlexColumnWidth(1.5), // Price (EGP)
@@ -49,7 +47,7 @@ class DisplayTable extends StatelessWidget {
         children: [
           // Header Row
           TableRow(
-            decoration:BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.surfaceContainerLow,
               borderRadius: BorderRadius.all(Radius.circular(8)),
             ),
@@ -97,10 +95,7 @@ class DisplayTable extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    drug.drugClass,
-                    style: AppTextStyles.tableCell,
-                  ),
+                  child: Text(drug.drugClass, style: AppTextStyles.tableCell),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -118,10 +113,7 @@ class DisplayTable extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    drug.route,
-                    style: AppTextStyles.tableCell,
-                  ),
+                  child: Text(drug.route, style: AppTextStyles.tableCell),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
