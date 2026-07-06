@@ -48,6 +48,13 @@ class DrugsRepository {
         .toList();
   }
 
+  Future<int> getTotalDrugCount() async {
+    final countExp = _db.drugTable.id.count();
+    final query = _db.selectOnly(_db.drugTable)..addColumns([countExp]);
+    final result = await query.getSingle();
+    return result.read(countExp)!;
+  }
+
   /// Fetches a page of drugs from Firestore.
   ///
   /// Set [isRefresh] to true to start fetching from the first page again.

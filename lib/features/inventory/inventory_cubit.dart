@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:protopharma/features/drugs/repositories/drugs_repository.dart';
 import 'package:protopharma/features/inventory/inventory_state.dart';
@@ -17,16 +16,19 @@ class InventoryCubit extends Cubit<InventoryState> {
   // final AppDatabase db;
   InventoryCubit({required this.drugRepository})
     : super(const InventoryInProgress()) {
-    _loadInventory(_currentPage);
+    _initTotalPages().then((_) => _loadInventory(_currentPage));
   }
   final DrugsRepository drugRepository;
-  // final String drugId;
-
   // ── State variables ──
   bool _isLoading = false;
   bool _hasMore = true;
-  static const int _pageSize = 10;
-  // Drop the field entirely, derive it when needed:
+  static const int pageSize = 10;
+  int _totalPages = 1;
+  int _totalCount = 0;
+
+  int get totalPages => _totalPages;
+  int get totalCount => _totalCount;
+
   int get _currentPage =>
       state is InventorySuccess ? (state as InventorySuccess).currentPage : 1;
 
@@ -37,10 +39,10 @@ class InventoryCubit extends Cubit<InventoryState> {
     try {
       //1
       final List<DrugModel> drugs = await drugRepository.getLocalDrugs(
-        offset: (page - 1) * _pageSize,
-        limit: _pageSize,
+        offset: (page - 1) * pageSize,
+        limit: pageSize,
       );
-      if (drugs.length < _pageSize) {
+      if (drugs.length < pageSize) {
         _hasMore = false; // We reached the end of the database.
       }
 
@@ -50,8 +52,8 @@ class InventoryCubit extends Cubit<InventoryState> {
         InventorySuccess(
           drugs: List.unmodifiable(drugs),
           hasMore: _hasMore,
-          isLoadingMore: _isLoading,
-          currentPage: _currentPage,
+          isLoadingMore: false,
+          currentPage: page,
         ),
       );
     } catch (_) {
@@ -61,7 +63,19 @@ class InventoryCubit extends Cubit<InventoryState> {
     }
   }
 
+  ///to-do
+  ///make the footer widget to display the pages number
+  ///and make it listents to the _currentPage
+  ///then we need to start making
+  /// the filters (search , category , stock status => to be made later)
+
+  Future<void> _initTotalPages() async {
+    _totalCount = await drugRepository.getTotalDrugCount();
+    _totalPages = (_totalCount / pageSize).ceil();
+  }
+
   // Helper shortcuts used by [<] and [>] buttons
   void nextPage() => _loadInventory(_currentPage + 1);
   void previousPage() => _loadInventory(_currentPage - 1);
+  void goToPage(int page) => _loadInventory(page);
 }

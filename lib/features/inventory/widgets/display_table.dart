@@ -17,7 +17,7 @@ class DisplayTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0),
+      margin: const EdgeInsets.symmetric(horizontal: 10.0),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
@@ -54,12 +54,17 @@ class DisplayTable extends StatelessWidget {
             children: columnNames
                 .map(
                   (name) => Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     child: Text(
                       name,
-                      style: AppTextStyles.titleMedium.copyWith(
-                        color: AppColors.textHeadline,
-                        fontWeight: FontWeight.bold,
+                      style: AppTextStyles.tableCell.copyWith(
+                        fontSize: 12,
+                        color: AppColors.textBody,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.04,
                       ),
                     ),
                   ),
@@ -70,13 +75,18 @@ class DisplayTable extends StatelessWidget {
             (drug) => TableRow(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         drug.commercialNameEn,
+                        maxLines: 1,
+                        overflow: TextOverflow.fade,
                         style: AppTextStyles.tableCell.copyWith(
                           fontWeight: FontWeight.w600,
                           color: AppColors.textHeadline,
@@ -85,6 +95,8 @@ class DisplayTable extends StatelessWidget {
                       if (drug.commercialNameAR.isNotEmpty)
                         Text(
                           drug.commercialNameAR,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.tableCell.copyWith(
                             fontSize: 12,
                             color: AppColors.textMuted,
@@ -94,29 +106,58 @@ class DisplayTable extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(drug.drugClass, style: AppTextStyles.tableCell),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: Text(
+                    drug.drugClass,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.tableCell,
+                  ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   child: Text(
                     drug.scientificName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.tableCell,
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   child: Text(
                     drug.manufacturer,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.tableCell,
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(drug.route, style: AppTextStyles.tableCell),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: Text(
+                    drug.route,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.tableCell,
+                  ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   child: Text(
                     drug.priceEGP.toStringAsFixed(2),
                     style: AppTextStyles.tableCell,
