@@ -1,0 +1,24 @@
+services:
+  backend:
+    build:
+      context: ./
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - DATABASE_URL=postgresql://postgres:Kekoahmed12@db:5432/drugdb
+    depends_on:
+      - db
+    volumes:
+      - ./:/app
+      - /app/node_modules
+  db:
+    image: postgres:18
+    container_name: postgres_container
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Kekoahmed12
+      - POSTGRES_DB=drugdb
+    ports:
+      - "5432:5432"

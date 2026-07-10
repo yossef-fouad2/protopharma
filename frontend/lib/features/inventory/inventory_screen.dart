@@ -21,11 +21,8 @@ class InventoryScreen extends StatelessWidget {
   }
 }
 
-///to-do: implement the inventory view
-///a3ml el bloc consumer & w map el data fe 3shan el drugData
-
 class _InventoryView extends StatelessWidget {
-  const _InventoryView({super.key});
+  const _InventoryView();
 
   @override
   Widget build(BuildContext context) {

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -27,14 +28,15 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   final AppDatabase db;
+  final FirebaseFirestore? firestore;
 
-  const MyApp({super.key, required this.db});
+  const MyApp({super.key, required this.db, this.firestore});
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider<DrugsRepository>(
-      create: (context) => DrugsRepository(db: db),
+      create: (context) => DrugsRepository(db: db, firestore: firestore),
       child: GetMaterialApp(
         title: AppConfig.appName,
         debugShowCheckedModeBanner: AppConfig.isDebug,

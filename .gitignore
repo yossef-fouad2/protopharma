@@ -1,55 +1,15 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
+# Ignore node_modules for backend
+backend/node_modules/
+backend/dist/
+backend/.env
+
+# Ignore Flutter build & tool directories
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/build/
+frontend/.env
+
+# OS files
 .DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-/coverage/
-
-# Symbolication related
-app.*.symbols
-# Exclude the secure drug database asset
-assets/data/egyptian-drugs.json
-lib/seeder
-
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# Local build artifacts and trace logs
-android/build/
-android/gradle_output.txt
-android/gradle_stacktrace.txt
-flutter_build_verbose.txt
+Thumbs.db
