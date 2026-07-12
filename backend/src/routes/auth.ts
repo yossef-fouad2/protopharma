@@ -4,17 +4,12 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { scrypt, randomBytes } from "node:crypto";
 import { promisify } from "node:util";
+import { validate } from "../middleware/validate.js";
+import { signupSchema, type SignupInput } from "../validation/schemas.js";
 
 const scryptAsync = promisify(scrypt);
 
 const authRouter = Router();
-
-interface signupBody {
-    username: string;
-    pin: string;
-    fullName: string;
-    role?: "admin" | "pharmacist" | "cashier";
-}
 
 // Hash PIN helper using node:crypto
 async function hashPin(pin: string): Promise<string> {
@@ -23,26 +18,11 @@ async function hashPin(pin: string): Promise<string> {
     return `${buf.toString("hex")}.${salt}`;
 }
 
-authRouter.post("/signup", async (req: Request<{}, {}, signupBody>, res: Response) => {
+authRouter.post("/signup", validate(signupSchema), async (req: Request, res: Response) => {
     try {
-        const { username, pin, fullName, role } = req.body;
+        const { username, pin, fullName, role } = req.body as SignupInput;
 
-        // 1. Basic validation
-        if (!username || !pin || !fullName) {
-            return res.status(400).json({ error: "username, pin, and fullName are required" });
-        }
-
-        // 2. Validate PIN format (should be exactly 4 digits)
-        if (!/^\d{4}$/.test(pin)) {
-            return res.status(400).json({ error: "PIN must be exactly 4 digits" });
-        }
-
-        // 3. Validate Role if provided
-        if (role && !["admin", "pharmacist", "cashier"].includes(role)) {
-            return res.status(400).json({ error: "Invalid role. Must be 'admin', 'pharmacist', or 'cashier'" });
-        }
-
-        // 4. Check if username is already taken
+        // 1. Check if username is already taken
         const existingUser = await db.
             select().from(users).
             where(eq(users.username, username));
@@ -51,29 +31,26 @@ authRouter.post("/signup", async (req: Request<{}, {}, signupBody>, res: Respons
             return res.status(400).json({ error: "User with the same username already exists" });
         }
 
-        // 5. Hash PIN
+        // 2. Hash PIN
         const hashedPin = await hashPin(pin);
 
-        // 6. Insert new user into the database
-        const [newUser] = await db.insert(users).values({
+        // 3. Insert new user into the database
+        const [user] = await db.insert(users).values({
             username,
             pin: hashedPin,
             fullName,
-            role: role || "pharmacist",
+            role,
         }).returning();
 
-        if (!newUser) {
+        if (!user) {
             return res.status(500).json({ error: "Failed to create user" });
         }
 
+        const { pin: _, deletedAt: __, ...safeUser } = user;
+
         return res.status(201).json({
             message: "User registered successfully",
-            user: {
-                id: newUser.id,
-                username: newUser.username,
-                fullName: newUser.fullName,
-                role: newUser.role,
-            }
+            user: safeUser,
         });
     } catch (e: any) {
         res.status(500).json({ error: e.message || e });
@@ -81,7 +58,7 @@ authRouter.post("/signup", async (req: Request<{}, {}, signupBody>, res: Respons
 });
 
 authRouter.get("/", (req, res) => {
-    res.send("hey from auth")
+    res.send("hey from auth");
 });
 
 export default authRouter;
