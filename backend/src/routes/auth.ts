@@ -19,42 +19,38 @@ async function hashPin(pin: string): Promise<string> {
 }
 
 authRouter.post("/signup", validate(signupSchema), async (req: Request, res: Response) => {
-    try {
-        const { username, pin, fullName, role } = req.body as SignupInput;
+    const { username, pin, fullName, role } = req.body as SignupInput;
 
-        // 1. Check if username is already taken
-        const existingUser = await db.
-            select().from(users).
-            where(eq(users.username, username));
+    // 1. Check if username is already taken
+    const existingUser = await db.
+        select().from(users).
+        where(eq(users.username, username));
 
-        if (existingUser.length > 0) {
-            return res.status(400).json({ error: "User with the same username already exists" });
-        }
-
-        // 2. Hash PIN
-        const hashedPin = await hashPin(pin);
-
-        // 3. Insert new user into the database
-        const [user] = await db.insert(users).values({
-            username,
-            pin: hashedPin,
-            fullName,
-            role,
-        }).returning();
-
-        if (!user) {
-            return res.status(500).json({ error: "Failed to create user" });
-        }
-
-        const { pin: _, deletedAt: __, ...safeUser } = user;
-
-        return res.status(201).json({
-            message: "User registered successfully",
-            user: safeUser,
-        });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message || e });
+    if (existingUser.length > 0) {
+        return res.status(400).json({ error: "User with the same username already exists" });
     }
+
+    // 2. Hash PIN
+    const hashedPin = await hashPin(pin);
+
+    // 3. Insert new user into the database
+    const [user] = await db.insert(users).values({
+        username,
+        pin: hashedPin,
+        fullName,
+        role,
+    }).returning();
+
+    if (!user) {
+        return res.status(500).json({ error: "Failed to create user" });
+    }
+
+    const { pin: _, deletedAt: __, ...safeUser } = user;
+
+    return res.status(201).json({
+        message: "User registered successfully",
+        user: safeUser,
+    });
 });
 
 authRouter.get("/", (req, res) => {
