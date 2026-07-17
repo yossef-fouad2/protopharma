@@ -16,6 +16,7 @@ abstract class AppColors {
   static const Color textBody = Color(0xFF475569);
   static const Color textMuted = Color(0xFF94A3B8);
   static const Color border = Color(0xFFE2E8F0);
+  static const Color borderDark = Color(0xFFC6C6CD);
 
   // Semantic Colors
   static const Color success = Color(0xFF10B981);

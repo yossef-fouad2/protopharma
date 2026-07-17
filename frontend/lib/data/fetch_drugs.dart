@@ -59,11 +59,11 @@ Future<void> insertAllDrugs(AppDatabase db) async {
         chunk.map(
           (drug) => DrugTableCompanion.insert(
             commercialNameEn: drug.commercialNameEn,
-            commercialNameAR: drug.commercialNameAR,
-            scientificName: drug.scientificName,
-            manufacturer: drug.manufacturer,
-            drugClass: drug.drugClass,
-            route: drug.route,
+            commercialNameAR: Value(drug.commercialNameAR),
+            scientificName: Value(drug.scientificName),
+            manufacturer: Value(drug.manufacturer),
+            drugClass: Value(drug.drugClass),
+            route: Value(drug.route),
             priceEGP: drug.priceEGP,
           ),
         ),

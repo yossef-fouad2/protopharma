@@ -18,15 +18,29 @@ class InventorySuccess extends InventoryState {
     required this.hasMore,
     required this.isLoadingMore,
     required this.currentPage,
+    this.searchQuery = '',
+    this.selectedCategory,
+    this.inStockOnly = false,
   });
 
   final List<DrugModel> drugs;
   final bool hasMore;
   final bool isLoadingMore;
   final int currentPage;
+  final String searchQuery;
+  final String? selectedCategory;
+  final bool inStockOnly;
 
   @override
-  List<Object?> get props => [drugs, hasMore, isLoadingMore, currentPage];
+  List<Object?> get props => [
+    drugs,
+    hasMore,
+    isLoadingMore,
+    currentPage,
+    searchQuery,
+    selectedCategory,
+    inStockOnly,
+  ];
 }
 
 class InventoryFailure extends InventoryState {

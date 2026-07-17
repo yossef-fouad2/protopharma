@@ -1,28 +1,30 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:protopharma/features/drugs/repositories/drugs_repository.dart';
 import 'package:protopharma/features/inventory/inventory_state.dart';
 
 import '../drugs/models/drug_model.dart';
 
-///make new events load first page on openning
+/// Cubit that manages inventory listing with pagination, search, and category
+/// filtering.
 ///
-/// load_next_page
-///
-/// pageNumbers [1,2,3,4,5] when click on next it should
-///
-/// handle refresh
-
+/// Public API:
+///   - [updateSearchQuery] – debounced text search
+///   - [updateCategory]    – instant category filter
+///   - [nextPage] / [previousPage] / [goToPage] – pagination
 class InventoryCubit extends Cubit<InventoryState> {
-  // final AppDatabase db;
   InventoryCubit({required this.drugRepository})
     : super(const InventoryInProgress()) {
-    _initTotalPages().then((_) => _loadInventory(_currentPage));
+    _init();
   }
+
   final DrugsRepository drugRepository;
-  // ── State variables ──
+
+  // ── Pagination ──────────────────────────────────────────────────────────
   bool _isLoading = false;
   bool _hasMore = true;
-  static const int pageSize = 10;
+  static const int pageSize = 9;
   int _totalPages = 1;
   int _totalCount = 0;
 
@@ -32,50 +34,112 @@ class InventoryCubit extends Cubit<InventoryState> {
   int get _currentPage =>
       state is InventorySuccess ? (state as InventorySuccess).currentPage : 1;
 
+  // ── Search & filter ─────────────────────────────────────────────────────
+  String _searchQuery = '';
+  String? _selectedCategory;
+  bool _inStockOnly = false;
+  List<String> _categories = [];
+  Timer? _debounce;
+
+  /// Unique drug categories loaded from the database.
+  List<String> get categories => List.unmodifiable(_categories);
+
+  // ── Initialization ──────────────────────────────────────────────────────
+
+  Future<void> _init() async {
+    _categories = await drugRepository.getDistinctCategories();
+    await _refreshCounts();
+    await _loadInventory(1);
+  }
+
+  // ── Core loader (respects active filters) ──────────────────────────────
+
   Future<void> _loadInventory(int page) async {
     if (_isLoading || page < 1) return;
     _isLoading = true;
 
     try {
-      //1
-      final List<DrugModel> drugs = await drugRepository.getLocalDrugs(
+      final List<DrugModel> drugs = await drugRepository.searchLocalDrugs(
+        query: _searchQuery.isEmpty ? null : _searchQuery,
+        category: _selectedCategory,
+        inStockOnly: _inStockOnly,
         offset: (page - 1) * pageSize,
         limit: pageSize,
       );
-      if (drugs.length < pageSize) {
-        _hasMore = false; // We reached the end of the database.
-      }
 
+      _hasMore = drugs.length >= pageSize;
       _isLoading = false;
-      //2
+
       emit(
         InventorySuccess(
           drugs: List.unmodifiable(drugs),
           hasMore: _hasMore,
           isLoadingMore: false,
           currentPage: page,
+          searchQuery: _searchQuery,
+          selectedCategory: _selectedCategory,
+          inStockOnly: _inStockOnly,
         ),
       );
     } catch (_) {
-      emit(InventoryFailure());
+      emit(const InventoryFailure());
     } finally {
       _isLoading = false;
     }
   }
 
-  ///to-do
-  ///make the footer widget to display the pages number
-  ///and make it listents to the _currentPage
-  ///then we need to start making
-  /// the filters (search , category , stock status => to be made later)
+  /// Recalculates [_totalCount] and [_totalPages] for the active filters.
+  Future<void> _refreshCounts() async {
+    _totalCount = await drugRepository.getFilteredDrugCount(
+      query: _searchQuery.isEmpty ? null : _searchQuery,
+      category: _selectedCategory,
+      inStockOnly: _inStockOnly,
+    );
 
-  Future<void> _initTotalPages() async {
-    _totalCount = await drugRepository.getTotalDrugCount();
-    _totalPages = (_totalCount / pageSize).ceil();
+    _totalPages = (_totalCount / pageSize).ceil().clamp(
+      1,
+      double.maxFinite.toInt(),
+    );
   }
 
-  // Helper shortcuts used by [<] and [>] buttons
+  // ── Public search / filter API ─────────────────────────────────────────
+
+  /// Updates the text search query with a 400 ms debounce to avoid excessive
+  /// DB hits while the user is typing.
+  void updateSearchQuery(String query) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () async {
+      _searchQuery = query;
+      await _refreshCounts();
+      await _loadInventory(1);
+    });
+  }
+
+  /// Sets the category filter and immediately reloads from page 1.
+  void updateCategory(String? category) async {
+    _selectedCategory = category;
+    await _refreshCounts();
+    await _loadInventory(1);
+  }
+
+  /// Toggles the "in stock only" filter (hides drugs with 0 total stock).
+  void toggleInStockOnly(bool value) async {
+    _inStockOnly = value;
+    await _refreshCounts();
+    await _loadInventory(1);
+  }
+
+  // ── Pagination helpers ─────────────────────────────────────────────────
+
   void nextPage() => _loadInventory(_currentPage + 1);
   void previousPage() => _loadInventory(_currentPage - 1);
   void goToPage(int page) => _loadInventory(page);
+
+  // ── Cleanup ─────────────────────────────────────────────────────────────
+
+  @override
+  Future<void> close() {
+    _debounce?.cancel();
+    return super.close();
+  }
 }

@@ -20,8 +20,8 @@ class DisplayTable extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 10.0),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppColors.borderDark),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -49,7 +49,7 @@ class DisplayTable extends StatelessWidget {
           TableRow(
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerLow,
-              borderRadius: BorderRadius.all(Radius.circular(8)),
+              borderRadius: const BorderRadius.all(Radius.circular(4)),
             ),
             children: columnNames
                 .map(
@@ -134,12 +134,7 @@ class DisplayTable extends StatelessWidget {
                     horizontal: 12,
                     vertical: 6,
                   ),
-                  child: Text(
-                    drug.manufacturer,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.tableCell,
-                  ),
+                  child: _StockBadge(drug: drug),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -148,6 +143,7 @@ class DisplayTable extends StatelessWidget {
                   ),
                   child: Text(
                     drug.route,
+
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.tableCell,
@@ -167,6 +163,61 @@ class DisplayTable extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Colored badge showing a drug's total stock with a semantic status color.
+///
+///  - red    = out of stock (0)
+///  - amber  = low stock (<= [DrugModel.lowStockThreshold])
+///  - green  = healthy stock
+class _StockBadge extends StatelessWidget {
+  const _StockBadge({required this.drug});
+
+  final DrugModel drug;
+
+  @override
+  Widget build(BuildContext context) {
+    final (Color color, String label) = switch (drug.stockStatus) {
+      StockStatus.outOfStock => (AppColors.error, 'Out of stock'),
+      StockStatus.low => (AppColors.warning, 'Low: ${drug.stock}'),
+      StockStatus.inStock => (AppColors.success, '${drug.stock} in stock'),
+    };
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: color.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.tableCell.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

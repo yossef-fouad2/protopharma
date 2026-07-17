@@ -8,6 +8,12 @@ export const signupSchema = z.object({
   role: z.enum(["admin", "pharmacist", "cashier"]).default("pharmacist"),
 });
 
+
+export const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  pin: z.string().regex(/^\d{4}$/, "PIN must be exactly 4 digits"),
+});
+
 // --- Drugs ---
 export const createDrugSchema = z.object({
   commercialNameEn: z.string().min(1, "Commercial name (EN) is required"),
@@ -47,6 +53,7 @@ export const createSaleSchema = z.object({
 
 // --- Inferred TypeScript types ---
 export type SignupInput = z.infer<typeof signupSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateDrugInput = z.infer<typeof createDrugSchema>;
 export type CreateInventoryInput = z.infer<typeof createInventorySchema>;
 export type CreateSaleInput = z.infer<typeof createSaleSchema>;

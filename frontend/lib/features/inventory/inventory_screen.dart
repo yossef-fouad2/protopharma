@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:protopharma/features/inventory/widgets/display_table.dart';
 import 'package:protopharma/features/inventory/widgets/pagination_bar.dart';
+import 'package:protopharma/features/inventory/widgets/search_toolbar.dart';
 
 import '../../core/config/app_text_styles.dart';
 import '../drugs/repositories/drugs_repository.dart';
@@ -32,7 +33,7 @@ class _InventoryView extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 16),
                 Text("Inventory", style: AppTextStyles.h1),
@@ -43,13 +44,17 @@ class _InventoryView extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
+                const SearchToolbar(),
+
+                const SizedBox(height: 16),
+
                 Flexible(
                   child: DisplayTable(
                     columnNames: const [
                       "Medication name",
                       "Category",
                       "Scientific Name",
-                      "Manufacturer",
+                      "Stock",
                       "Route",
                       "Price (EGP)",
                     ],

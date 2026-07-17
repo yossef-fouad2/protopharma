@@ -8,6 +8,8 @@ import 'package:protopharma/core/config/app_pages.dart';
 import 'package:protopharma/core/config/app_theme.dart';
 import 'package:protopharma/data/app_database.dart';
 import 'package:protopharma/data/fetch_drugs.dart';
+import 'package:protopharma/data/seed_inventory.dart';
+
 import 'package:protopharma/features/drugs/repositories/drugs_repository.dart';
 import 'package:protopharma/firebase_options.dart';
 
@@ -20,8 +22,10 @@ void main() async {
 
   // Defer database seeding until after startup is complete to keep launch smooth
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    Future.delayed(const Duration(milliseconds: 500), () {
-      insertAllDrugs(db);
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      // Seed drugs first, then demo inventory batches on top of them.
+      await insertAllDrugs(db);
+      await seedInventory(db);
     });
   });
 }

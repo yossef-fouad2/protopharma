@@ -2,6 +2,7 @@
 backend/node_modules/
 backend/dist/
 backend/.env
+backend/.kilo/
 
 # Ignore Flutter build & tool directories
 frontend/.dart_tool/
@@ -9,7 +10,9 @@ frontend/.flutter-plugins
 frontend/.flutter-plugins-dependencies
 frontend/build/
 frontend/.env
+stitch_pharmacy_management_system
 
 # OS files
 .DS_Store
 Thumbs.db
+
