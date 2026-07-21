@@ -4,15 +4,16 @@ import 'package:get/get_instance/get_instance.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
 import 'package:protopharma/features/home/home_screen.dart';
 import 'package:protopharma/features/inventory/inventory_screen.dart';
-import 'package:protopharma/features/navigation/controllers/navigation_controller.dart';
+import 'package:protopharma/features/navigation/controllers/nav_controller.dart';
 import 'package:protopharma/features/navigation/widgets/side_nav_bar.dart';
+import 'package:protopharma/features/orders/order_view.dart';
 
 class MainLayoutScreen extends StatelessWidget {
   const MainLayoutScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(NavigationController());
+    final controller = Get.put(NavController());
     return Scaffold(
       body: Row(
         children: [
@@ -20,11 +21,11 @@ class MainLayoutScreen extends StatelessWidget {
           Expanded(
             child: Obx(
               () => IndexedStack(
-                index: controller.selectedIndex,
+                index: controller.currentIndex.value,
                 children: [
                   HomeScreen(),
                   InventoryScreen(),
-                  const Center(child: Text('Orders Screen')),
+                  OrderView(),
                   const Center(child: Text('Checkout Screen')),
                 ],
               ),

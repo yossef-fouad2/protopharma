@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:protopharma/features/drugs/repositories/drugs_repository.dart';
 import 'package:protopharma/features/inventory/inventory_state.dart';
@@ -40,14 +41,24 @@ class InventoryCubit extends Cubit<InventoryState> {
   bool _inStockOnly = false;
   List<String> _categories = [];
   Timer? _debounce;
+  StreamSubscription<List<String>>? _categoriesSub;
 
   /// Unique drug categories loaded from the database.
   List<String> get categories => List.unmodifiable(_categories);
 
+  /// Called whenever the reactive category list changes so widgets that read
+  /// [categories] outside the bloc build (e.g. the toolbar dropdown) refresh.
+  VoidCallback? onCategoriesChanged;
+
   // ── Initialization ──────────────────────────────────────────────────────
 
   Future<void> _init() async {
-    _categories = await drugRepository.getDistinctCategories();
+    // Reactively track categories so the filter dropdown stays in sync after
+    // create/edit/delete without a manual reload.
+    _categoriesSub = drugRepository.watchDistinctCategories().listen((cats) {
+      _categories = cats;
+      onCategoriesChanged?.call();
+    });
     await _refreshCounts();
     await _loadInventory(1);
   }
@@ -135,11 +146,125 @@ class InventoryCubit extends Cubit<InventoryState> {
   void previousPage() => _loadInventory(_currentPage - 1);
   void goToPage(int page) => _loadInventory(page);
 
+  // ── Mutations (CRUD) ─────────────────────────────────────────────────────
+  //
+  // After any write we refresh the total counts and reload the current page so
+  // the table reflects the change. The category dropdown updates itself via the
+  // reactive `watchDistinctCategories` stream, and batch lists inside the
+  // detail drawer update via `watchBatchesForDrug`.
+
+  /// Reloads counts + the current page after a mutation.
+  Future<void> _reloadCurrentView() async {
+    await _refreshCounts();
+    // Clamp in case a delete removed the last item on the final page.
+    final page = _currentPage.clamp(1, _totalPages);
+    await _loadInventory(page);
+  }
+
+  /// Creates a new drug in the catalog.
+  Future<void> addDrug({
+    required String commercialNameEn,
+    String commercialNameAR = 'N/A',
+    String scientificName = 'N/A',
+    String manufacturer = 'N/A',
+    String drugClass = 'N/A',
+    String route = 'N/A',
+    required double priceEGP,
+  }) async {
+    await drugRepository.createDrug(
+      commercialNameEn: commercialNameEn,
+      commercialNameAR: commercialNameAR,
+      scientificName: scientificName,
+      manufacturer: manufacturer,
+      drugClass: drugClass,
+      route: route,
+      priceEGP: priceEGP,
+    );
+    await _reloadCurrentView();
+  }
+
+  /// Updates catalog metadata for an existing drug.
+  Future<void> editDrug({
+    required int id,
+    required String commercialNameEn,
+    required String commercialNameAR,
+    required String scientificName,
+    required String manufacturer,
+    required String drugClass,
+    required String route,
+    required double priceEGP,
+  }) async {
+    await drugRepository.updateDrug(
+      id: id,
+      commercialNameEn: commercialNameEn,
+      commercialNameAR: commercialNameAR,
+      scientificName: scientificName,
+      manufacturer: manufacturer,
+      drugClass: drugClass,
+      route: route,
+      priceEGP: priceEGP,
+    );
+    await _reloadCurrentView();
+  }
+
+  /// Soft-deletes a drug (and cascades to its batches).
+  Future<void> deleteDrug(int id) async {
+    await drugRepository.softDeleteDrug(id);
+    await _reloadCurrentView();
+  }
+
+  /// Adds a new inventory batch to a drug.
+  Future<void> addBatch({
+    required int drugId,
+    required int quantity,
+    required String batchNumber,
+    required String expiryDate,
+    required double purchasePrice,
+    required double sellingPrice,
+  }) async {
+    await drugRepository.addBatch(
+      drugId: drugId,
+      quantity: quantity,
+      batchNumber: batchNumber,
+      expiryDate: expiryDate,
+      purchasePrice: purchasePrice,
+      sellingPrice: sellingPrice,
+    );
+    await _reloadCurrentView();
+  }
+
+  /// Updates an existing batch.
+  Future<void> editBatch({
+    required int id,
+    required int quantity,
+    required String batchNumber,
+    required String expiryDate,
+    required double purchasePrice,
+    required double sellingPrice,
+  }) async {
+    await drugRepository.updateBatch(
+      id: id,
+      quantity: quantity,
+      batchNumber: batchNumber,
+      expiryDate: expiryDate,
+      purchasePrice: purchasePrice,
+      sellingPrice: sellingPrice,
+    );
+    await _reloadCurrentView();
+  }
+
+  /// Soft-deletes a single batch.
+  Future<void> deleteBatch(int id) async {
+    await drugRepository.deleteBatch(id);
+    await _reloadCurrentView();
+  }
+
   // ── Cleanup ─────────────────────────────────────────────────────────────
 
   @override
   Future<void> close() {
     _debounce?.cancel();
+    _categoriesSub?.cancel();
     return super.close();
   }
 }

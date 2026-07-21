@@ -29,6 +29,15 @@ set(CMAKE_SHARED_LINKER_FLAGS_PROFILE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
 set(CMAKE_C_FLAGS_PROFILE "${CMAKE_C_FLAGS_RELEASE}")
 set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE}")
 
+# The Firebase C++ SDK ships prebuilt Debug/Release libraries only. In a Profile
+# build CMake otherwise falls back to the Debug Firebase libs, which are linked
+# against the debug CRT and produce unresolved symbols (_CrtDbgReport,
+# _calloc_dbg, _Crt_new_delete) because the Profile executable uses the release
+# CRT. Map the Profile configuration to Release for imported targets so the
+# Release Firebase libraries are selected instead.
+set(CMAKE_MAP_IMPORTED_CONFIG_PROFILE "Release" "")
+
+
 # Use Unicode for all projects.
 add_definitions(-DUNICODE -D_UNICODE)
 

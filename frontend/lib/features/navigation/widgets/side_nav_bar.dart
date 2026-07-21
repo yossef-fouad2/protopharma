@@ -4,8 +4,9 @@ import 'package:get/get_instance/get_instance.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
 import 'package:protopharma/core/config/app_routes.dart';
 import 'package:protopharma/core/config/app_theme.dart';
-import 'package:protopharma/features/navigation/controllers/navigation_controller.dart';
+import 'package:protopharma/features/navigation/controllers/nav_controller.dart';
 import 'package:protopharma/features/navigation/models/nav_menu_item_model.dart';
+import 'package:protopharma/features/navigation/widgets/pharmacy_label.dart';
 
 class SideNavBar extends StatelessWidget {
   const SideNavBar({super.key});
@@ -35,7 +36,7 @@ class SideNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<NavigationController>();
+    final controller = Get.find<NavController>();
     return Container(
       width: 200,
       height: double.infinity,
@@ -46,6 +47,11 @@ class SideNavBar extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          SizedBox(height: 40),
+          PharmacyLabel(
+            label: 'Pharmacy of\nD.marwa',
+            icon: Icons.local_pharmacy_outlined,
+          ),
           SizedBox(height: 160),
           Expanded(
             child: ListView.builder(
@@ -54,7 +60,7 @@ class SideNavBar extends StatelessWidget {
               itemBuilder: (context, index) {
                 final item = _menuItems[index];
                 return Obx(() {
-                  final isSelected = controller.selectedIndex == index;
+                  final isSelected = controller.currentIndex.value == index;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 9.0),
                     child: Material(
@@ -97,6 +103,7 @@ class SideNavBar extends StatelessWidget {
                             fontSize: 12,
                           ),
                         ),
+
                         onTap: () => controller.changeIndex(index),
                       ),
                     ),

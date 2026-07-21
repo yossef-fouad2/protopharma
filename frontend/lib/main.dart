@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
@@ -11,11 +9,9 @@ import 'package:protopharma/data/fetch_drugs.dart';
 import 'package:protopharma/data/seed_inventory.dart';
 
 import 'package:protopharma/features/drugs/repositories/drugs_repository.dart';
-import 'package:protopharma/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final db = AppDatabase();
 
   runApp(MyApp(db: db));
@@ -32,15 +28,14 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   final AppDatabase db;
-  final FirebaseFirestore? firestore;
 
-  const MyApp({super.key, required this.db, this.firestore});
+  const MyApp({super.key, required this.db});
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider<DrugsRepository>(
-      create: (context) => DrugsRepository(db: db, firestore: firestore),
+      create: (context) => DrugsRepository(db: db),
       child: GetMaterialApp(
         title: AppConfig.appName,
         debugShowCheckedModeBanner: AppConfig.isDebug,

@@ -6,20 +6,24 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:flutter/widgets.dart';
 
 import 'package:protopharma/data/app_database.dart';
 import 'package:protopharma/main.dart';
 
 void main() {
-  testWidgets('App renders main layout and home screen smoke test', (WidgetTester tester) async {
+  testWidgets('App renders main layout and home screen smoke test', (
+    WidgetTester tester,
+  ) async {
     // Build our app and trigger a frame.
     final db = AppDatabase();
-    final fakeFirestore = FakeFirebaseFirestore();
-    await tester.pumpWidget(MyApp(db: db, firestore: fakeFirestore));
+    await tester.pumpWidget(MyApp(db: db));
 
-    // Verify that our home screen renders and shows the welcome message.
-    expect(find.text('Welcome to protopharma'), findsOneWidget);
-    expect(find.text('Search for a drug'), findsOneWidget);
+    // Verify that the dashboard layout renders.
+    expect(find.text('Overview'), findsOneWidget);
+    expect(find.text('Critical Alerts'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await db.close();
   });
 }

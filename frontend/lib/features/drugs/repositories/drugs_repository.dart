@@ -1,27 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart' hide Expression, Constant;
-import 'package:drift/drift.dart' hide Query;
+import 'package:drift/drift.dart';
+import 'package:protopharma/features/drugs/models/batch_model.dart';
 import 'package:protopharma/features/drugs/models/drug_model.dart';
 import 'package:protopharma/features/home/models/inventory_alert.dart';
 import '../../../data/app_database.dart';
 
 class DrugsRepository {
-  final FirebaseFirestore _firestore;
   final AppDatabase _db;
-  // List of all loaded drugs across pages
-  final List<DrugModel> drugs = [];
 
-  // Pagination tracking variables
-  DocumentSnapshot? _lastDocument;
-  bool _hasMore = true;
-  bool _isLoading = false;
-
-  DrugsRepository({FirebaseFirestore? firestore, required AppDatabase db})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _db = db;
-
-  // Getters to inspect the state from outside
-  bool get hasMore => _hasMore;
-  bool get isLoading => _isLoading;
+  DrugsRepository({required AppDatabase db}) : _db = db;
 
   Future<List<DrugModel>> getLocalDrugs({
     int limit = 20,
@@ -30,6 +16,7 @@ class DrugsRepository {
     // Query the table directly using the repository's local database instance (_db)
     final drugDataList =
         await (_db.select(_db.drugTable)
+              ..where((t) => t.deletedAt.isNull())
               ..orderBy([(t) => OrderingTerm.asc(t.commercialNameEn)])
               ..limit(limit, offset: offset))
             .get();
@@ -64,7 +51,10 @@ class DrugsRepository {
 
     final query = _db.selectOnly(_db.inventoryTable)
       ..addColumns([_db.inventoryTable.drugId, qtySum, minExpiry])
-      ..where(_db.inventoryTable.drugId.isIn(ids))
+      ..where(
+        _db.inventoryTable.drugId.isIn(ids) &
+            _db.inventoryTable.deletedAt.isNull(),
+      )
       ..groupBy([_db.inventoryTable.drugId]);
 
     final rows = await query.get();
@@ -101,7 +91,7 @@ class DrugsRepository {
 
     // Apply filters
     select.where((t) {
-      Expression<bool> condition = const Constant(true);
+      Expression<bool> condition = t.deletedAt.isNull();
 
       if (query != null && query.trim().isNotEmpty) {
         final matchPattern = '%${query.trim()}%';
@@ -150,6 +140,7 @@ class DrugsRepository {
     final qtySum = _db.inventoryTable.quantity.sum();
     final inStockIds = _db.selectOnly(_db.inventoryTable)
       ..addColumns([_db.inventoryTable.drugId])
+      ..where(_db.inventoryTable.deletedAt.isNull())
       ..groupBy([
         _db.inventoryTable.drugId,
       ], having: qtySum.isBiggerThanValue(0));
@@ -160,6 +151,7 @@ class DrugsRepository {
   Future<List<String>> getDistinctCategories() async {
     final query = _db.selectOnly(_db.drugTable, distinct: true)
       ..addColumns([_db.drugTable.drugClass])
+      ..where(_db.drugTable.deletedAt.isNull())
       ..orderBy([OrderingTerm.asc(_db.drugTable.drugClass)]);
 
     final rows = await query.get();
@@ -180,7 +172,7 @@ class DrugsRepository {
     final q = _db.selectOnly(_db.drugTable)..addColumns([countExp]);
 
     q.where(() {
-      Expression<bool> condition = const Constant(true);
+      Expression<bool> condition = _db.drugTable.deletedAt.isNull();
 
       if (query != null && query.trim().isNotEmpty) {
         final matchPattern = '%${query.trim()}%';
@@ -210,6 +202,181 @@ class DrugsRepository {
     return result.read(countExp)!;
   }
 
+  /// Emits the live list of unique, active drug categories (drugClass column).
+  ///
+  /// Reactive so the category filter dropdown updates automatically when a
+  /// drug's class is created, edited, or soft-deleted.
+  Stream<List<String>> watchDistinctCategories() {
+    final query = _db.selectOnly(_db.drugTable, distinct: true)
+      ..addColumns([_db.drugTable.drugClass])
+      ..where(_db.drugTable.deletedAt.isNull())
+      ..orderBy([OrderingTerm.asc(_db.drugTable.drugClass)]);
+
+    return query.watch().map(
+      (rows) => rows
+          .map((row) => row.read(_db.drugTable.drugClass))
+          .where((val) => val != null && val.trim().isNotEmpty)
+          .cast<String>()
+          .toList(),
+    );
+  }
+
+  // ── Drug catalog CRUD ────────────────────────────────────────────────────
+
+  /// Inserts a new drug into the catalog and returns its generated id.
+  Future<int> createDrug({
+    required String commercialNameEn,
+    String commercialNameAR = 'N/A',
+    String scientificName = 'N/A',
+    String manufacturer = 'N/A',
+    String drugClass = 'N/A',
+    String route = 'N/A',
+    required double priceEGP,
+  }) {
+    return _db
+        .into(_db.drugTable)
+        .insert(
+          DrugTableCompanion.insert(
+            commercialNameEn: commercialNameEn,
+            commercialNameAR: Value(commercialNameAR),
+            scientificName: Value(scientificName),
+            manufacturer: Value(manufacturer),
+            drugClass: Value(drugClass),
+            route: Value(route),
+            priceEGP: priceEGP,
+          ),
+        );
+  }
+
+  /// Updates the catalog metadata for an existing drug.
+  ///
+  /// Bumps `updatedAt` since the [TableTimestamps] client default only fires
+  /// on insert.
+  Future<void> updateDrug({
+    required int id,
+    required String commercialNameEn,
+    required String commercialNameAR,
+    required String scientificName,
+    required String manufacturer,
+    required String drugClass,
+    required String route,
+    required double priceEGP,
+  }) {
+    return (_db.update(_db.drugTable)..where((t) => t.id.equals(id))).write(
+      DrugTableCompanion(
+        commercialNameEn: Value(commercialNameEn),
+        commercialNameAR: Value(commercialNameAR),
+        scientificName: Value(scientificName),
+        manufacturer: Value(manufacturer),
+        drugClass: Value(drugClass),
+        route: Value(route),
+        priceEGP: Value(priceEGP),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  /// Soft-deletes a drug and cascades the soft-delete to all of its inventory
+  /// batches in a single transaction.
+  ///
+  /// Setting `deletedAt` on both sides keeps stock rollups and dashboard alerts
+  /// consistent: a deleted drug's remaining batches never contribute to totals.
+  Future<void> softDeleteDrug(int id) {
+    final now = DateTime.now();
+    return _db.transaction(() async {
+      await (_db.update(_db.drugTable)..where((t) => t.id.equals(id))).write(
+        DrugTableCompanion(deletedAt: Value(now), updatedAt: Value(now)),
+      );
+      await (_db.update(
+        _db.inventoryTable,
+      )..where((t) => t.drugId.equals(id) & t.deletedAt.isNull())).write(
+        InventoryTableCompanion(deletedAt: Value(now), updatedAt: Value(now)),
+      );
+    });
+  }
+
+  // ── Inventory batch CRUD ─────────────────────────────────────────────────
+
+  /// Emits the live list of active (non-deleted) batches for a drug, ordered by
+  /// soonest expiry first. Powers the batch list inside the detail drawer.
+  Stream<List<BatchModel>> watchBatchesForDrug(int drugId) {
+    final query = _db.select(_db.inventoryTable)
+      ..where((t) => t.drugId.equals(drugId) & t.deletedAt.isNull())
+      ..orderBy([(t) => OrderingTerm.asc(t.expiryDate)]);
+
+    return query.watch().map(
+      (rows) => rows
+          .map(
+            (e) => BatchModel(
+              id: e.id,
+              drugId: e.drugId,
+              quantity: e.quantity,
+              batchNumber: e.batchNumber,
+              expiryDate: e.expiryDate,
+              purchasePrice: e.purchasePrice,
+              sellingPrice: e.sellingPrice,
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  /// Adds a new inventory batch (lot) for a drug and returns its generated id.
+  Future<int> addBatch({
+    required int drugId,
+    required int quantity,
+    required String batchNumber,
+    required String expiryDate,
+    required double purchasePrice,
+    required double sellingPrice,
+  }) {
+    return _db
+        .into(_db.inventoryTable)
+        .insert(
+          InventoryTableCompanion.insert(
+            drugId: drugId,
+            quantity: Value(quantity),
+            batchNumber: Value(batchNumber),
+            expiryDate: expiryDate,
+            purchasePrice: Value(purchasePrice),
+            sellingPrice: Value(sellingPrice),
+          ),
+        );
+  }
+
+  /// Updates an existing batch and bumps `updatedAt`.
+  Future<void> updateBatch({
+    required int id,
+    required int quantity,
+    required String batchNumber,
+    required String expiryDate,
+    required double purchasePrice,
+    required double sellingPrice,
+  }) {
+    return (_db.update(
+      _db.inventoryTable,
+    )..where((t) => t.id.equals(id))).write(
+      InventoryTableCompanion(
+        quantity: Value(quantity),
+        batchNumber: Value(batchNumber),
+        expiryDate: Value(expiryDate),
+        purchasePrice: Value(purchasePrice),
+        sellingPrice: Value(sellingPrice),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  /// Soft-deletes a single batch. The parent drug stays active.
+  Future<void> deleteBatch(int id) {
+    final now = DateTime.now();
+    return (_db.update(
+      _db.inventoryTable,
+    )..where((t) => t.id.equals(id))).write(
+      InventoryTableCompanion(deletedAt: Value(now), updatedAt: Value(now)),
+    );
+  }
+
   // ── Critical alerts (dashboard) ─────────────────────────────────────────
   //
   // Alerts are derived from the inventory table entirely in SQL so the
@@ -224,12 +391,17 @@ class DrugsRepository {
   static const int expiringWithinDays = 30;
 
   /// Common per-drug rollup subquery: total stock and soonest expiry per drug.
+  ///
+  /// Excludes soft-deleted batches and only rolls up batches whose parent drug
+  /// is still active, so deleted drugs/batches never feed the dashboard alerts.
   String get _drugRollupSql => '''
-    SELECT drug_id,
-           SUM(quantity)     AS total_stock,
-           MIN(expiry_date)  AS min_expiry
-    FROM inventory_table
-    GROUP BY drug_id
+    SELECT i.drug_id        AS drug_id,
+           SUM(i.quantity)  AS total_stock,
+           MIN(i.expiry_date) AS min_expiry
+    FROM inventory_table i
+    JOIN drug_table d ON d.id = i.drug_id AND d.deleted_at IS NULL
+    WHERE i.deleted_at IS NULL
+    GROUP BY i.drug_id
   ''';
 
   /// Today's date as an ISO-8601 string (yyyy-MM-dd).
@@ -399,65 +571,5 @@ class DrugsRepository {
     final today = DateTime.tryParse(_today)!;
     final target = DateTime(date.year, date.month, date.day);
     return target.difference(today).inDays;
-  }
-
-  /// Fetches a page of drugs from Firestore.
-  ///
-  /// Set [isRefresh] to true to start fetching from the first page again.
-  Future<List<DrugModel>> getDrugs({
-    int pageSize = 20,
-    bool isRefresh = false,
-    String? drugId,
-  }) async {
-    // If already loading, ignore duplicate calls
-    if (_isLoading) return [];
-
-    if (isRefresh) {
-      _lastDocument = null;
-      _hasMore = true;
-      drugs.clear();
-    }
-
-    // If there is no more data, return empty list
-    if (!_hasMore) return [];
-
-    _isLoading = true;
-
-    try {
-      // 1. Start with the ordered query
-      Query query = _firestore.collection('drugs').orderBy('commercialNameEn');
-
-      // 2. Apply startAfterDocument cursor first (essential for fake_cloud_firestore sequence matching)
-      if (_lastDocument != null) {
-        query = query.startAfterDocument(_lastDocument!);
-      }
-
-      // 3. Apply limit last
-      query = query.limit(pageSize);
-
-      final querySnapshot = await query.get();
-
-      // If we fetched fewer items than requested, we reached the end
-      if (querySnapshot.docs.length < pageSize) {
-        _hasMore = false;
-      }
-
-      // Save the last document as the cursor for the next page
-      if (querySnapshot.docs.isNotEmpty) {
-        _lastDocument = querySnapshot.docs.last;
-      }
-
-      // Map to models
-      final newDrugs = querySnapshot.docs.map((doc) {
-        return DrugModel.fromJson(doc.data() as Map<String, dynamic>);
-      }).toList();
-
-      drugs.addAll(newDrugs);
-      return newDrugs;
-    } catch (e) {
-      rethrow;
-    } finally {
-      _isLoading = false;
-    }
   }
 }

@@ -9,10 +9,14 @@ class DisplayTable extends StatelessWidget {
     super.key,
     required this.columnNames,
     required this.drugData,
+    this.onRowTap,
   });
 
   final List<String> columnNames;
   final List<DrugModel> drugData;
+
+  /// Called when a drug row is tapped (opens the detail drawer).
+  final ValueChanged<DrugModel>? onRowTap;
 
   @override
   Widget build(BuildContext context) {
@@ -74,12 +78,9 @@ class DisplayTable extends StatelessWidget {
           ...drugData.map(
             (drug) => TableRow(
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  child: Column(
+                _cell(
+                  drug,
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -105,56 +106,37 @@ class DisplayTable extends StatelessWidget {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  child: Text(
+                _cell(
+                  drug,
+                  Text(
                     drug.drugClass,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.tableCell,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  child: Text(
+                _cell(
+                  drug,
+                  Text(
                     drug.scientificName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.tableCell,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  child: _StockBadge(drug: drug),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  child: Text(
+                _cell(drug, _StockBadge(drug: drug)),
+                _cell(
+                  drug,
+                  Text(
                     drug.route,
-
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.tableCell,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  child: Text(
+                _cell(
+                  drug,
+                  Text(
                     drug.priceEGP.toStringAsFixed(2),
                     style: AppTextStyles.tableCell,
                   ),
@@ -166,9 +148,24 @@ class DisplayTable extends StatelessWidget {
       ),
     );
   }
+
+  /// Wraps a cell's [child] in padding and, when [onRowTap] is set, makes it a
+  /// tap target that opens the detail drawer for [drug].
+  ///
+  /// A Flutter [Table] can't wrap a whole row in a gesture detector, so each
+  /// cell carries the tap handler to make the entire row feel clickable.
+  Widget _cell(DrugModel drug, Widget child) {
+    final content = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: child,
+    );
+    if (onRowTap == null) return content;
+    return TableRowInkWell(onTap: () => onRowTap!(drug), child: content);
+  }
 }
 
 /// Colored badge showing a drug's total stock with a semantic status color.
+
 ///
 ///  - red    = out of stock (0)
 ///  - amber  = low stock (<= [DrugModel.lowStockThreshold])
