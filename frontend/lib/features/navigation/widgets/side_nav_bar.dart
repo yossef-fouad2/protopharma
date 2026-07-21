@@ -52,7 +52,7 @@ class SideNavBar extends StatelessWidget {
             label: 'Pharmacy of\nD.marwa',
             icon: Icons.local_pharmacy_outlined,
           ),
-          SizedBox(height: 160),
+          SizedBox(height: 40),
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 8),
