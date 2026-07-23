@@ -105,13 +105,13 @@ class _InventoryView extends StatelessWidget {
                 Flexible(
                   child: RepaintBoundary(
                     child: DisplayTable(
-                      columnNames: const [
-                        "Medication name",
-                        "Category",
-                        "Scientific Name",
-                        "Stock",
-                        "Route",
-                        "Price (EGP)",
+                      columns: const [
+                        DrugTableColumn.medicationName,
+                        DrugTableColumn.category,
+                        DrugTableColumn.scientificName,
+                        DrugTableColumn.stock,
+                        DrugTableColumn.route,
+                        DrugTableColumn.price,
                       ],
                       drugData: state.drugs,
                       onRowTap: (drug) => _openDetail(context, drug),

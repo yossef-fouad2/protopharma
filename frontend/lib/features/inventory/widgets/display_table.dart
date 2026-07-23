@@ -4,15 +4,24 @@ import 'package:protopharma/core/config/app_text_styles.dart';
 
 import '../../drugs/models/drug_model.dart';
 
+enum DrugTableColumn {
+  medicationName,
+  category,
+  scientificName,
+  stock,
+  route,
+  price,
+}
+
 class DisplayTable extends StatelessWidget {
   const DisplayTable({
     super.key,
-    required this.columnNames,
+    required this.columns,
     required this.drugData,
     this.onRowTap,
   });
 
-  final List<String> columnNames;
+  final List<DrugTableColumn> columns;
   final List<DrugModel> drugData;
 
   /// Called when a drug row is tapped (opens the detail drawer).
@@ -55,15 +64,15 @@ class DisplayTable extends StatelessWidget {
               color: AppColors.surfaceContainerLow,
               borderRadius: const BorderRadius.all(Radius.circular(4)),
             ),
-            children: columnNames
+            children: columns
                 .map(
-                  (name) => Padding(
+                  (column) => Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,
                     ),
                     child: Text(
-                      name,
+                      _columnTitle(column),
                       style: AppTextStyles.tableCell.copyWith(
                         fontSize: 12,
                         color: AppColors.textBody,
@@ -77,76 +86,90 @@ class DisplayTable extends StatelessWidget {
           ),
           ...drugData.map(
             (drug) => TableRow(
-              children: [
-                _cell(
-                  drug,
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        drug.commercialNameEn,
-                        maxLines: 1,
-                        overflow: TextOverflow.fade,
-                        style: AppTextStyles.tableCell.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textHeadline,
-                        ),
-                      ),
-                      if (drug.commercialNameAR.isNotEmpty)
-                        Text(
-                          drug.commercialNameAR,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.tableCell.copyWith(
-                            fontSize: 12,
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                _cell(
-                  drug,
-                  Text(
-                    drug.drugClass,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.tableCell,
-                  ),
-                ),
-                _cell(
-                  drug,
-                  Text(
-                    drug.scientificName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.tableCell,
-                  ),
-                ),
-                _cell(drug, _StockBadge(drug: drug)),
-                _cell(
-                  drug,
-                  Text(
-                    drug.route,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.tableCell,
-                  ),
-                ),
-                _cell(
-                  drug,
-                  Text(
-                    drug.priceEGP.toStringAsFixed(2),
-                    style: AppTextStyles.tableCell,
-                  ),
-                ),
-              ],
+              children: columns
+                  .map((column) => _columnCell(drug, column))
+                  .toList(),
             ),
           ),
         ],
       ),
     );
+  }
+
+  String _columnTitle(DrugTableColumn column) {
+    return switch (column) {
+      DrugTableColumn.medicationName => 'Medication name',
+      DrugTableColumn.category => 'Category',
+      DrugTableColumn.scientificName => 'Scientific Name',
+      DrugTableColumn.stock => 'Stock',
+      DrugTableColumn.route => 'Route',
+      DrugTableColumn.price => 'Price (EGP)',
+    };
+  }
+
+  Widget _columnCell(DrugModel drug, DrugTableColumn column) {
+    return switch (column) {
+      DrugTableColumn.medicationName => _cell(
+        drug,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              drug.commercialNameEn,
+              maxLines: 1,
+              overflow: TextOverflow.fade,
+              style: AppTextStyles.tableCell.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textHeadline,
+              ),
+            ),
+            if (drug.commercialNameAR.isNotEmpty)
+              Text(
+                drug.commercialNameAR,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.tableCell.copyWith(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
+              ),
+          ],
+        ),
+      ),
+      DrugTableColumn.category => _cell(
+        drug,
+        Text(
+          drug.drugClass,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyles.tableCell,
+        ),
+      ),
+      DrugTableColumn.scientificName => _cell(
+        drug,
+        Text(
+          drug.scientificName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyles.tableCell,
+        ),
+      ),
+      DrugTableColumn.stock => _cell(drug, _StockBadge(drug: drug)),
+      DrugTableColumn.route => _cell(
+        drug,
+        Text(
+          drug.route,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyles.tableCell,
+        ),
+      ),
+      DrugTableColumn.price => _cell(
+        drug,
+        Text(drug.priceEGP.toStringAsFixed(2), style: AppTextStyles.tableCell),
+      ),
+    };
   }
 
   /// Wraps a cell's [child] in padding and, when [onRowTap] is set, makes it a
