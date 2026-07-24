@@ -7,6 +7,7 @@ import '../../inventory/inventory_state.dart';
 import '../../inventory/widgets/display_table.dart';
 import '../../inventory/widgets/pagination_bar.dart';
 import '../../inventory/widgets/search_toolbar.dart';
+import '../cubit/order_cubit.dart';
 
 class AddMedBox extends StatelessWidget {
   const AddMedBox({super.key});
@@ -29,7 +30,7 @@ class AddMedBox extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                const SearchToolbar(),
+                SearchToolbar(),
                 const SizedBox(height: 12),
                 Expanded(
                   child: BlocBuilder<InventoryCubit, InventoryState>(
@@ -58,9 +59,8 @@ class AddMedBox extends StatelessWidget {
                                 drugData:
                                     //  [],
                                     state.drugs,
-                                onRowTap: (drug) {
-                                  // TODO: Add this drug to the current order.
-                                },
+                                onRowTap: (drug) =>
+                                    context.read<OrderCubit>().addDrug(drug),
                               ),
                             ),
                             PaginationBar(
