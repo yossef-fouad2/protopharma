@@ -25,7 +25,7 @@ class InventoryCubit extends Cubit<InventoryState> {
   // ── Pagination ──────────────────────────────────────────────────────────
   bool _isLoading = false;
   bool _hasMore = true;
-  static const int pageSize = 9;
+  static const int pageSize = 6;
   int _totalPages = 1;
   int _totalCount = 0;
 

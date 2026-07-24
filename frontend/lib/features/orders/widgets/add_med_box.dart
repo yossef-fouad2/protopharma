@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:protopharma/core/config/app_text_styles.dart';
 
 import '../../drugs/repositories/drugs_repository.dart';
 import '../../inventory/inventory_cubit.dart';
 import '../../inventory/inventory_state.dart';
 import '../../inventory/widgets/display_table.dart';
+import '../../inventory/widgets/pagination_bar.dart';
 import '../../inventory/widgets/search_toolbar.dart';
 
 class AddMedBox extends StatelessWidget {
@@ -13,7 +13,6 @@ class AddMedBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //wrap it with bloc provider to pass the cubit to the display table and search toolbar
     return BlocProvider(
       create: (_) =>
           InventoryCubit(drugRepository: context.read<DrugsRepository>()),
@@ -30,28 +29,63 @@ class AddMedBox extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                SearchToolbar(),
-                //to-do wrap the table with a bloc builder to get the data from the inventory cubit
-                BlocBuilder<InventoryCubit, InventoryState>(
-                  builder: (context, state) {
-                    return DisplayTable(
-                      columns: const [
-                        DrugTableColumn.medicationName,
-                        DrugTableColumn.category,
-                        DrugTableColumn.route,
-                        DrugTableColumn.price,
-                      ],
-                      drugData: [], // Replace with actual data from the cubit
-                      onRowTap: (drug) {
-                        // TODO: Add this drug to the current order.
-                      },
-                    );
-                  },
+                const SearchToolbar(),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: BlocBuilder<InventoryCubit, InventoryState>(
+                    builder: (context, state) {
+                      if (state is InventoryInProgress) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (state is InventoryFailure) {
+                        return const Center(
+                          child: Text('Something went wrong'),
+                        );
+                      }
+
+                      if (state is InventorySuccess) {
+                        return Column(
+                          children: [
+                            Expanded(
+                              child: DisplayTable(
+                                columns: const [
+                                  DrugTableColumn.medicationName,
+                                  DrugTableColumn.category,
+                                  DrugTableColumn.route,
+                                  DrugTableColumn.price,
+                                ],
+                                drugData:
+                                    //  [],
+                                    state.drugs,
+                                onRowTap: (drug) {
+                                  // TODO: Add this drug to the current order.
+                                },
+                              ),
+                            ),
+                            PaginationBar(
+                              currentPage: state.currentPage,
+                              totalPages: context
+                                  .read<InventoryCubit>()
+                                  .totalPages,
+                              totalCount: context
+                                  .read<InventoryCubit>()
+                                  .totalCount,
+                              pageSize: InventoryCubit.pageSize,
+                            ),
+                          ],
+                        );
+                      }
+
+                      return const SizedBox.shrink();
+                    },
+                  ),
                 ),
-                Icon(Icons.add, size: 48, color: Colors.grey),
-                SizedBox(height: 16),
-                Text('Add Medicine', style: AppTextStyles.titleMedium),
-                SizedBox(height: 8),
+                // const SizedBox(height: 80),
+                // const Icon(Icons.add, size: 48, color: Colors.grey),
+                // const SizedBox(height: 16),
+                // Text('Add Medicine', style: AppTextStyles.titleMedium),
+                // const SizedBox(height: 8),
               ],
             ),
           ),
