@@ -161,6 +161,10 @@ class InventoryCubit extends Cubit<InventoryState> {
     await _loadInventory(page);
   }
 
+  /// Public hook so external flows (e.g. a completed sale) can force the
+  /// listing to re-query the DB and show the fresh stock counts.
+  Future<void> reload() => _reloadCurrentView();
+
   /// Creates a new drug in the catalog.
   Future<void> addDrug({
     required String commercialNameEn,

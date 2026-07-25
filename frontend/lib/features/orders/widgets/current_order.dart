@@ -6,6 +6,7 @@ import '../../../core/config/app_colors.dart';
 import '../cubit/order_cubit.dart';
 import '../cubit/order_state.dart';
 import '../models/order_item.dart';
+import 'checkout_button.dart';
 
 class CurrentOrder extends StatelessWidget {
   const CurrentOrder({super.key});
@@ -33,14 +34,14 @@ class CurrentOrder extends StatelessWidget {
                       : ListView.separated(
                           padding: const EdgeInsets.all(12),
                           itemCount: state.items.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (_, _) =>
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) =>
                               _OrderCard(item: state.items[index]),
                         ),
                 ),
                 _TotalsFooter(state: state),
-                _CheckoutButton(enabled: state.items.isNotEmpty),
+                CheckoutButton(enabled: state.items.isNotEmpty),
               ],
             );
           },
@@ -345,40 +346,6 @@ class _TotalsFooter extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Full-width dark checkout button (visual placeholder for now).
-class _CheckoutButton extends StatelessWidget {
-  const _CheckoutButton({required this.enabled});
-
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: enabled ? () {} : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.textHeadline,
-            foregroundColor: AppColors.surface,
-            disabledBackgroundColor: AppColors.border,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          icon: const Icon(Icons.point_of_sale_outlined, size: 20),
-          label: Text(
-            'Proceed to Checkout',
-            style: AppTextStyles.titleMedium.copyWith(color: AppColors.surface),
-          ),
-        ),
-      ),
     );
   }
 }

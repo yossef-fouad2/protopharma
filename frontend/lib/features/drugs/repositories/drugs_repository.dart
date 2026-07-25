@@ -367,6 +367,66 @@ class DrugsRepository {
     );
   }
 
+  // ── Sales stock consumption ─────────────────────────────────────────────
+  //
+  // When a checkout completes we need to walk the inventory batches for each
+  // sold drug and decrement their `quantity` in FIFO order (nearest expiry
+  // first) so older lots leave the shelf before newer ones.
+  //
+  // The whole operation runs in a single transaction so a partial failure
+  // never leaves the ledger in an inconsistent state.
+
+  /// Deducts [drugIdToQuantity] units from inventory in FIFO order.
+  ///
+  /// Returns a map of `drugId -> actually deducted quantity` so callers can
+  /// warn the user when the request exceeded the available stock. Batches
+  /// that reach zero are left in the table (their qty simply becomes 0) so
+  /// history and audit trails stay intact.
+  Future<Map<int, int>> deductStockForSale(
+    Map<int, int> drugIdToQuantity,
+  ) async {
+    if (drugIdToQuantity.isEmpty) return const {};
+    final deducted = <int, int>{};
+
+    await _db.transaction(() async {
+      for (final entry in drugIdToQuantity.entries) {
+        final drugId = entry.key;
+        var remaining = entry.value;
+        if (remaining <= 0) continue;
+
+        // Load all active batches ordered by soonest expiry (FIFO).
+        final batches =
+            await (_db.select(_db.inventoryTable)
+                  ..where((t) => t.drugId.equals(drugId) & t.deletedAt.isNull())
+                  ..orderBy([(t) => OrderingTerm.asc(t.expiryDate)]))
+                .get();
+
+        for (final batch in batches) {
+          if (remaining <= 0) break;
+          if (batch.quantity <= 0) continue;
+
+          final take = batch.quantity < remaining ? batch.quantity : remaining;
+          final newQty = batch.quantity - take;
+
+          await (_db.update(
+            _db.inventoryTable,
+          )..where((t) => t.id.equals(batch.id))).write(
+            InventoryTableCompanion(
+              quantity: Value(newQty),
+              updatedAt: Value(DateTime.now()),
+            ),
+          );
+
+          remaining -= take;
+        }
+
+        deducted[drugId] = entry.value - remaining;
+      }
+    });
+
+    return deducted;
+  }
+
   /// Soft-deletes a single batch. The parent drug stays active.
   Future<void> deleteBatch(int id) {
     final now = DateTime.now();

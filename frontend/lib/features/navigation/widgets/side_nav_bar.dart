@@ -28,9 +28,9 @@ class SideNavBar extends StatelessWidget {
       route: AppRoutes.orders,
     ),
     NavMenuItem(
-      title: 'Checkout',
-      icon: Icons.shopping_cart_outlined,
-      route: AppRoutes.checkout,
+      title: 'Order History',
+      icon: Icons.history_outlined,
+      route: AppRoutes.orderHistory,
     ),
   ];
 

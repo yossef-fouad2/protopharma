@@ -6,6 +6,7 @@ import 'package:protopharma/features/home/home_screen.dart';
 import 'package:protopharma/features/inventory/inventory_screen.dart';
 import 'package:protopharma/features/navigation/controllers/nav_controller.dart';
 import 'package:protopharma/features/navigation/widgets/side_nav_bar.dart';
+import 'package:protopharma/features/orders/order_history_screen.dart';
 import 'package:protopharma/features/orders/order_view.dart';
 
 class MainLayoutScreen extends StatelessWidget {
@@ -26,7 +27,7 @@ class MainLayoutScreen extends StatelessWidget {
                   HomeScreen(),
                   InventoryScreen(),
                   OrderView(),
-                  const Center(child: Text('Checkout Screen')),
+                  const OrderHistoryScreen(),
                 ],
               ),
             ),

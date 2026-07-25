@@ -10,6 +10,8 @@ import 'package:protopharma/features/inventory/widgets/search_toolbar.dart';
 
 import '../../core/config/app_text_styles.dart';
 import '../drugs/repositories/drugs_repository.dart';
+import '../orders/cubit/sales_cubit.dart';
+import '../orders/cubit/sales_state.dart';
 import 'inventory_cubit.dart';
 import 'inventory_state.dart';
 
@@ -21,7 +23,14 @@ class InventoryScreen extends StatelessWidget {
     return BlocProvider<InventoryCubit>(
       create: (_) =>
           InventoryCubit(drugRepository: context.read<DrugsRepository>()),
-      child: const Scaffold(body: SafeArea(child: _InventoryView())),
+      // A completed sale (see SalesCubit.checkout) deducts stock in the DB but
+      // this screen paginates with plain .get() queries, so it needs a nudge to
+      // re-fetch the current page and show the new stock badges.
+      child: BlocListener<SalesCubit, SalesState>(
+        listenWhen: (prev, curr) => prev.sales.length != curr.sales.length,
+        listener: (context, _) => context.read<InventoryCubit>().reload(),
+        child: const Scaffold(body: SafeArea(child: _InventoryView())),
+      ),
     );
   }
 }

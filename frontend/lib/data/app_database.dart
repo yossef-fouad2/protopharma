@@ -6,15 +6,17 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:protopharma/data/tables/drug_table.dart';
 import 'package:protopharma/data/tables/inventory_table.dart';
+import 'package:protopharma/data/tables/sales_table.dart';
+import 'package:protopharma/data/tables/sale_items_table.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [DrugTable, InventoryTable])
+@DriftDatabase(tables: [DrugTable, InventoryTable, SalesTable, SaleItemsTable])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -28,12 +30,6 @@ class AppDatabase extends _$AppDatabase {
       }
       // v2 → v3: add shared timestamp columns (created/updated/deleted) to
       // both tables to mirror the backend `timestamps` block.
-      //
-      // createdAt/updatedAt are NOT NULL with a Dart-side clientDefault (no SQL
-      // default), so SQLite's `ALTER TABLE ADD COLUMN` needs a constant default
-      // to backfill existing rows. Drift stores DateTime as unix seconds, so we
-      // seed existing rows with "now" as a constant integer. deletedAt is
-      // nullable and needs no default.
       if (from < 3) {
         final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
         for (final table in const ['drug_table', 'inventory_table']) {
@@ -49,6 +45,11 @@ class AppDatabase extends _$AppDatabase {
             'ALTER TABLE $table ADD COLUMN deleted_at INTEGER',
           );
         }
+      }
+      // v3 → v4: introduce sales and sale_items tables for POS sales history.
+      if (from < 4) {
+        await m.createTable(salesTable);
+        await m.createTable(saleItemsTable);
       }
     },
   );

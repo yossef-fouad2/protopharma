@@ -9,6 +9,8 @@ import 'package:protopharma/data/fetch_drugs.dart';
 import 'package:protopharma/data/seed_inventory.dart';
 
 import 'package:protopharma/features/drugs/repositories/drugs_repository.dart';
+import 'package:protopharma/features/orders/cubit/sales_cubit.dart';
+import 'package:protopharma/features/orders/repositories/sales_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,14 +38,31 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return RepositoryProvider<DrugsRepository>(
       create: (context) => DrugsRepository(db: db),
-      child: GetMaterialApp(
-        title: AppConfig.appName,
-        debugShowCheckedModeBanner: AppConfig.isDebug,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system, // Automatically matches device theme
-        initialRoute: AppPages.initial,
-        getPages: AppPages.routes,
+      // SalesCubit lives at the app root so the Orders, Order History, and
+      // Dashboard screens all read from (and stay in sync with) the same
+      // in-memory sales ledger.
+      child: RepositoryProvider<SalesRepository>(
+        create: (_) => SalesRepository(db: db),
+        child: BlocProvider<SalesCubit>(
+          // Injecting the DrugsRepository lets checkout deduct stock from
+          // inventory batches (FIFO) in the same transaction that records the
+          // sale, so the drug listing and dashboard alerts stay in sync.
+          // Injecting the SalesRepository persists the sales ledger to disk
+          // so history and dashboard metrics survive app restarts.
+          create: (context) => SalesCubit(
+            drugsRepository: context.read<DrugsRepository>(),
+            salesRepository: context.read<SalesRepository>(),
+          ),
+          child: GetMaterialApp(
+            title: AppConfig.appName,
+            debugShowCheckedModeBanner: AppConfig.isDebug,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.system, // Automatically matches device theme
+            initialRoute: AppPages.initial,
+            getPages: AppPages.routes,
+          ),
+        ),
       ),
     );
   }

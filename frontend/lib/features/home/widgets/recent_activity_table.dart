@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:protopharma/core/config/app_theme.dart';
+import 'package:protopharma/features/navigation/controllers/nav_controller.dart';
+import 'package:protopharma/features/orders/cubit/sales_cubit.dart';
+import 'package:protopharma/features/orders/cubit/sales_state.dart';
+import 'package:protopharma/features/orders/models/sale_model.dart';
+import 'package:protopharma/features/orders/widgets/sale_details_drawer.dart';
 
-/// Recent Activity table showing the latest pharmacy operations.
+/// Recent Activity table showing the latest completed sales from [SalesCubit].
+///
+/// The list stays in sync with the app-wide sales ledger: any checkout will
+/// immediately appear at the top. "View All" jumps to the Order History tab.
 class RecentActivityTable extends StatelessWidget {
-  const RecentActivityTable({super.key});
+  const RecentActivityTable({super.key, this.maxRows = 6});
+
+  /// Cap on how many rows to render so the dashboard stays compact.
+  final int maxRows;
 
   @override
   Widget build(BuildContext context) {
@@ -24,50 +37,14 @@ class RecentActivityTable extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: AppColors.background,
-              border: Border(bottom: BorderSide(color: AppColors.borderDark)),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Recent Activity', style: AppTextStyles.titleMedium),
-                InkWell(
-                  onTap: () {},
-                  borderRadius: BorderRadius.circular(4),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Row(
-                      children: [
-                        Text(
-                          'View All',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: AppColors.textBody,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.arrow_forward,
-                          size: 16,
-                          color: AppColors.textBody,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Table content
+          _header(),
           Expanded(
-            child: SingleChildScrollView(
-              child: _buildTable(),
+            child: BlocBuilder<SalesCubit, SalesState>(
+              builder: (context, state) {
+                final rows = state.sales.take(maxRows).toList();
+                if (rows.isEmpty) return const _EmptyState();
+                return SingleChildScrollView(child: _buildTable(context, rows));
+              },
             ),
           ),
         ],
@@ -75,7 +52,53 @@ class RecentActivityTable extends StatelessWidget {
     );
   }
 
-  Widget _buildTable() {
+  Widget _header() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        border: Border(bottom: BorderSide(color: AppColors.borderDark)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('Recent Activity', style: AppTextStyles.titleMedium),
+          InkWell(
+            // Jumps to the Order History tab (index 3 in MainLayoutScreen).
+            onTap: () {
+              if (Get.isRegistered<NavController>()) {
+                Get.find<NavController>().changeIndex(3);
+              }
+            },
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                children: [
+                  Text(
+                    'View All',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: AppColors.textBody,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.arrow_forward,
+                    size: 16,
+                    color: AppColors.textBody,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTable(BuildContext context, List<SaleModel> sales) {
     return Table(
       columnWidths: const {
         0: FlexColumnWidth(1.2),
@@ -92,15 +115,15 @@ class RecentActivityTable extends StatelessWidget {
           ),
           children: [
             _headerCell('Time'),
-            _headerCell('Patient / Ref'),
+            _headerCell('Sale'),
             _headerCell('Action'),
-            _headerCell('Status', align: TextAlign.right),
+            _headerCell('Payment', align: TextAlign.right),
           ],
         ),
-        // Data rows
-        ..._demoRows.asMap().entries.map((entry) {
+        // Data rows — one per sale.
+        ...sales.asMap().entries.map((entry) {
           final i = entry.key;
-          final row = entry.value;
+          final sale = entry.value;
           return TableRow(
             decoration: BoxDecoration(
               color: i.isEven ? Colors.white : AppColors.background,
@@ -109,14 +132,29 @@ class RecentActivityTable extends StatelessWidget {
               ),
             ),
             children: [
-              _dataCell(row.time, color: AppColors.textMuted),
-              _patientCell(row.patient, row.refCode),
-              _dataCell(row.action),
-              _statusCell(row.status, row.statusType),
+              _tapCell(
+                context,
+                sale,
+                _dataCell(
+                  _formatTime(sale.createdAt),
+                  color: AppColors.textMuted,
+                ),
+              ),
+              _tapCell(context, sale, _refCell(sale)),
+              _tapCell(context, sale, _dataCell(_describeSale(sale))),
+              _tapCell(context, sale, _paymentBadgeCell(sale)),
             ],
           );
         }),
       ],
+    );
+  }
+
+  /// Wraps a table cell in an [InkWell] so the whole row opens the details drawer.
+  Widget _tapCell(BuildContext context, SaleModel sale, Widget child) {
+    return TableRowInkWell(
+      onTap: () => SaleDetailsDrawer.show(context, sale: sale),
+      child: child,
     );
   }
 
@@ -149,14 +187,14 @@ class RecentActivityTable extends StatelessWidget {
     );
   }
 
-  Widget _patientCell(String name, String refCode) {
+  Widget _refCell(SaleModel sale) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            name,
+            sale.reference,
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -164,7 +202,7 @@ class RecentActivityTable extends StatelessWidget {
             ),
           ),
           Text(
-            refCode,
+            sale.userName,
             style: GoogleFonts.inter(fontSize: 12, color: AppColors.textMuted),
           ),
         ],
@@ -172,27 +210,22 @@ class RecentActivityTable extends StatelessWidget {
     );
   }
 
-  Widget _statusCell(String label, _StatusType type) {
-    final (Color bg, Color fg, Color border) = switch (type) {
-      _StatusType.completed => (
+  Widget _paymentBadgeCell(SaleModel sale) {
+    final (Color bg, Color fg, Color border) = switch (sale.paymentMethod) {
+      PaymentMethod.cash => (
         const Color(0xFFE8F5E9),
         const Color(0xFF00714D),
         const Color(0xFF00714D).withValues(alpha: 0.2),
       ),
-      _StatusType.pending => (
+      PaymentMethod.card => (
         const Color(0xFFE8EAF6),
         const Color(0xFF283593),
         const Color(0xFF283593).withValues(alpha: 0.2),
       ),
-      _StatusType.processed => (
-        const Color(0xFFE8F5E9),
-        const Color(0xFF00714D),
-        const Color(0xFF00714D).withValues(alpha: 0.2),
-      ),
-      _StatusType.hold => (
-        const Color(0xFFFFEBEE),
-        const Color(0xFF93000A),
-        const Color(0xFF93000A).withValues(alpha: 0.2),
+      PaymentMethod.insurance => (
+        const Color(0xFFFFF3E0),
+        const Color(0xFF9A5B00),
+        const Color(0xFF9A5B00).withValues(alpha: 0.2),
       ),
     };
 
@@ -208,7 +241,7 @@ class RecentActivityTable extends StatelessWidget {
             border: Border.all(color: border),
           ),
           child: Text(
-            label,
+            sale.paymentMethod.label,
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -220,38 +253,50 @@ class RecentActivityTable extends StatelessWidget {
       ),
     );
   }
+
+  /// Short natural-language summary of what was sold.
+  String _describeSale(SaleModel sale) {
+    if (sale.items.isEmpty) return 'Empty sale';
+    final first = sale.items.first;
+    final extra = sale.items.length - 1;
+    final base = '${first.quantity}× ${first.drugName}';
+    return extra > 0 ? '$base  +$extra more' : base;
+  }
+
+  String _formatTime(DateTime dt) {
+    final now = DateTime.now();
+    final isToday =
+        dt.year == now.year && dt.month == now.month && dt.day == now.day;
+    final hh = dt.hour.toString().padLeft(2, '0');
+    final mm = dt.minute.toString().padLeft(2, '0');
+    if (isToday) return '$hh:$mm';
+    final m = dt.month.toString().padLeft(2, '0');
+    final d = dt.day.toString().padLeft(2, '0');
+    return '$m-$d $hh:$mm';
+  }
 }
 
-// ── Demo data ──
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
 
-enum _StatusType { completed, pending, processed, hold }
-
-class _ActivityRow {
-  const _ActivityRow(
-    this.time,
-    this.patient,
-    this.refCode,
-    this.action,
-    this.status,
-    this.statusType,
-  );
-  final String time;
-  final String patient;
-  final String refCode;
-  final String action;
-  final String status;
-  final _StatusType statusType;
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.timelapse_outlined,
+            size: 32,
+            color: AppColors.textMuted,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'No recent activity yet',
+            style: GoogleFonts.inter(fontSize: 14, color: AppColors.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
 }
-
-const _demoRows = [
-  _ActivityRow('10:42 AM', 'John Doe', 'RX-98234-A',
-      'Amoxicillin 500mg Dispensed', 'Completed', _StatusType.completed),
-  _ActivityRow('10:38 AM', 'Sarah Jenkins', 'RX-98235-B',
-      'Lisinopril 10mg Verification', 'Pending', _StatusType.pending),
-  _ActivityRow('10:15 AM', 'Inventory System', 'INV-PO-442',
-      'McKesson Order Received', 'Processed', _StatusType.processed),
-  _ActivityRow('09:55 AM', 'Robert Chen', 'RX-98230-C',
-      'Atorvastatin 20mg Refill', 'Insurance Hold', _StatusType.hold),
-  _ActivityRow('09:30 AM', 'Maria Garcia', 'RX-98228-A',
-      'Metformin 1000mg Dispensed', 'Completed', _StatusType.completed),
-];
